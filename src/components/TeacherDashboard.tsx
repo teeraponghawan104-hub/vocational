@@ -5,6 +5,7 @@ import { subscribeToAssessments, deleteAssessment } from '../db';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, Search, Filter, BarChart3, Users, Trash2, X, Download, Printer } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
 import ResultDashboard from './ResultDashboard';
 import { getCareerRecommendations } from '../data';
 import { students } from '../studentData';
@@ -165,13 +166,50 @@ export default function TeacherDashboard({ onBack }: Props) {
     ? Math.round(filteredResults.reduce((acc, r) => acc + (r.part3ConsistencyPercentage || 0), 0) / filteredResults.length)
     : 0;
 
-  // Aggregate Top Holland Code (RIASEC)
-  const hollandCounts: Record<string, number> = {};
+  // Aggregate Holland Code (RIASEC)
+  const hollandCounts: Record<string, number> = { R: 0, I: 0, A: 0, S: 0, E: 0, C: 0 };
   filteredResults.forEach(r => {
     const type = getCareerRecommendations(r.part1Score).type;
-    hollandCounts[type] = (hollandCounts[type] || 0) + 1;
+    if (type && hollandCounts[type] !== undefined) {
+      hollandCounts[type]++;
+    }
   });
-  const topHolland = Object.entries(hollandCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '-';
+  const sortedHolland = Object.entries(hollandCounts).sort((a, b) => b[1] - a[1]);
+  const hollandChartData = sortedHolland.map(([name, count]) => ({
+    name,
+    count,
+    percentage: filteredResults.length > 0 ? Math.round((count / filteredResults.length) * 100) : 0
+  }));
+  const topHolland = hollandChartData[0]?.name || '-';
+  const topHollandPct = hollandChartData[0]?.percentage || 0;
+  const midHollandIdx = Math.floor(hollandChartData.length / 2);
+  const midHolland = hollandChartData[midHollandIdx]?.name || '-';
+  const midHollandPct = hollandChartData[midHollandIdx]?.percentage || 0;
+  const bottomHolland = hollandChartData[hollandChartData.length - 1]?.name || '-';
+  const bottomHollandPct = hollandChartData[hollandChartData.length - 1]?.percentage || 0;
+
+  // Aggregate Aptitude (D, P, T)
+  const aptitudeCounts: Record<string, number> = { D: 0, P: 0, T: 0 };
+  filteredResults.forEach(r => {
+    const sortedApt = Object.entries(r.part2Score).sort((a, b) => b[1] - a[1]);
+    const topApt = sortedApt[0]?.[0];
+    if (topApt && aptitudeCounts[topApt] !== undefined) {
+      aptitudeCounts[topApt]++;
+    }
+  });
+  const sortedAptitude = Object.entries(aptitudeCounts).sort((a, b) => b[1] - a[1]);
+  const aptitudeChartData = sortedAptitude.map(([name, count]) => ({
+    name,
+    count,
+    percentage: filteredResults.length > 0 ? Math.round((count / filteredResults.length) * 100) : 0
+  }));
+  const topAptitude = aptitudeChartData[0]?.name || '-';
+  const topAptitudePct = aptitudeChartData[0]?.percentage || 0;
+  const midAptitude = aptitudeChartData[1]?.name || '-';
+  const midAptitudePct = aptitudeChartData[1]?.percentage || 0;
+  const bottomAptitude = aptitudeChartData[2]?.name || '-';
+  const bottomAptitudePct = aptitudeChartData[2]?.percentage || 0;
+
   const totalStudents = students.length;
   const totalCompleted = results.length;
   const totalCompletionPercent = totalStudents > 0 ? Math.round((totalCompleted / totalStudents) * 100) : 0;
@@ -228,7 +266,7 @@ export default function TeacherDashboard({ onBack }: Props) {
       <div className="max-w-6xl mx-auto px-6 mt-8">
         
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors">
             <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0"><Users size={28} /></div>
             <div className="flex-1">
@@ -251,12 +289,95 @@ export default function TeacherDashboard({ onBack }: Props) {
               <p className="text-3xl font-bold text-slate-800">{avgConsistency}%</p>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors">
-            <div className="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center shrink-0"><BarChart3 size={28} /></div>
-            <div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">บุคลิกภาพที่พบมากสุด</p>
-              <p className="text-3xl font-bold text-slate-800">{topHolland}</p>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0"><BarChart3 size={20} /></div>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight">บุคลิกภาพ<br/>(Holland)</p>
             </div>
+            <div className="flex justify-between items-center px-1">
+               <div className="text-center">
+                  <p className="text-[10px] text-slate-400 mb-1">มากสุด</p>
+                  <p className="text-xl font-bold text-emerald-600 flex items-baseline justify-center gap-1">
+                    {topHolland} <span className="text-[10px] font-medium text-slate-400">{topHollandPct}%</span>
+                  </p>
+               </div>
+               <div className="text-center">
+                  <p className="text-[10px] text-slate-400 mb-1">กลาง</p>
+                  <p className="text-xl font-bold text-amber-500 flex items-baseline justify-center gap-1">
+                    {midHolland} <span className="text-[10px] font-medium text-slate-400">{midHollandPct}%</span>
+                  </p>
+               </div>
+               <div className="text-center">
+                  <p className="text-[10px] text-slate-400 mb-1">น้อยสุด</p>
+                  <p className="text-xl font-bold text-rose-500 flex items-baseline justify-center gap-1">
+                    {bottomHolland} <span className="text-[10px] font-medium text-slate-400">{bottomHollandPct}%</span>
+                  </p>
+               </div>
+            </div>
+          </div>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><BarChart3 size={20} /></div>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight">ความถนัด<br/>(Aptitude)</p>
+            </div>
+            <div className="flex justify-between items-center px-1">
+               <div className="text-center">
+                  <p className="text-[10px] text-slate-400 mb-1">มากสุด</p>
+                  <p className="text-xl font-bold text-emerald-600 flex items-baseline justify-center gap-1">
+                    {topAptitude} <span className="text-[10px] font-medium text-slate-400">{topAptitudePct}%</span>
+                  </p>
+               </div>
+               <div className="text-center">
+                  <p className="text-[10px] text-slate-400 mb-1">กลาง</p>
+                  <p className="text-xl font-bold text-amber-500 flex items-baseline justify-center gap-1">
+                    {midAptitude} <span className="text-[10px] font-medium text-slate-400">{midAptitudePct}%</span>
+                  </p>
+               </div>
+               <div className="text-center">
+                  <p className="text-[10px] text-slate-400 mb-1">น้อยสุด</p>
+                  <p className="text-xl font-bold text-rose-500 flex items-baseline justify-center gap-1">
+                    {bottomAptitude} <span className="text-[10px] font-medium text-slate-400">{bottomAptitudePct}%</span>
+                  </p>
+               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Charts Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">การกระจายบุคลิกภาพ (Holland)</h2>
+             <div className="h-64">
+               <ResponsiveContainer width="100%" height="100%">
+                 <BarChart data={hollandChartData}>
+                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                   <Tooltip 
+                     cursor={{fill: '#f1f5f9'}}
+                     contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                   />
+                   <Bar dataKey="percentage" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" />
+                 </BarChart>
+               </ResponsiveContainer>
+             </div>
+          </div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">การกระจายความถนัด (Aptitude)</h2>
+             <div className="h-64">
+               <ResponsiveContainer width="100%" height="100%">
+                 <BarChart data={aptitudeChartData}>
+                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                   <Tooltip 
+                     cursor={{fill: '#f1f5f9'}}
+                     contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                   />
+                   <Bar dataKey="percentage" fill="#f59e0b" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" />
+                 </BarChart>
+               </ResponsiveContainer>
+             </div>
           </div>
         </div>
 
