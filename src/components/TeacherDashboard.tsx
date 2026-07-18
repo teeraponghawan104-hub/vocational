@@ -21,6 +21,7 @@ export default function TeacherDashboard({ onBack }: Props) {
   const [selectedResult, setSelectedResult] = useState<AssessmentResult | null>(null);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletePassword, setDeletePassword] = useState('');
 
   useEffect(() => {
     setLoading(true);
@@ -131,10 +132,17 @@ export default function TeacherDashboard({ onBack }: Props) {
   };
 
   const confirmDelete = async (id: string) => {
+    if (deletePassword !== "112003") {
+      alert("รหัสผ่านไม่ถูกต้อง");
+      setDeletingId(null);
+      setDeletePassword('');
+      return;
+    }
+
     try {
       await deleteAssessment(id);
       setDeletingId(null);
-      fetchResults();
+      setDeletePassword('');
     } catch (e) {
       console.error("Failed to delete assessment:", e);
       alert("ไม่สามารถลบข้อมูลได้ โปรดลองใหม่อีกครั้ง");
@@ -355,19 +363,29 @@ export default function TeacherDashboard({ onBack }: Props) {
                       </td>
                       <td className="px-6 py-4">
                         {deletingId === r.id ? (
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={(e) => { e.stopPropagation(); confirmDelete(r.id); }}
-                              className="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded font-bold"
-                            >
-                              ยืนยัน
-                            </button>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDeletingId(null); }}
-                              className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded font-bold"
-                            >
-                              ยกเลิก
-                            </button>
+                          <div className="flex flex-col gap-1 items-start">
+                            <input
+                              type="password"
+                              placeholder="รหัสผ่าน"
+                              value={deletePassword}
+                              onChange={(e) => setDeletePassword(e.target.value)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-xs border rounded px-2 py-1 w-24 focus:outline-none focus:ring-1 focus:ring-red-500"
+                            />
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); confirmDelete(r.id); }}
+                                className="text-xs bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded font-bold"
+                              >
+                                ยืนยัน
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); setDeletingId(null); setDeletePassword(''); }}
+                                className="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-2 py-1 rounded font-bold"
+                              >
+                                ยกเลิก
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <button
