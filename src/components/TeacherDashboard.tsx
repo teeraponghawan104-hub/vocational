@@ -285,7 +285,7 @@ export default function TeacherDashboard({ onBack }: Props) {
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors">
             <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0"><BarChart3 size={28} /></div>
             <div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">ความแน่วแน่เฉลี่ย</p>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">ความมั่นใจเฉลี่ย</p>
               <p className="text-3xl font-bold text-slate-800">{avgConsistency}%</p>
             </div>
           </div>
@@ -439,7 +439,7 @@ export default function TeacherDashboard({ onBack }: Props) {
                   <th className="px-6 py-5">ชื่อ - นามสกุล</th>
                   <th className="px-6 py-5">บุคลิกภาพ (RIASEC)</th>
                   <th className="px-6 py-5">ความถนัด (D-P-T)</th>
-                  <th className="px-6 py-5">ความแน่วแน่</th>
+                  <th className="px-6 py-5">ความมั่นใจ</th>
                   <th className="px-6 py-5">เวลาที่ทำเสร็จ</th>
                   <th className="px-6 py-5">จัดการ</th>
                 </tr>
