@@ -144,16 +144,14 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             <Printer size={14} className="shrink-0" />
             <span>พิมพ์ / PDF</span>
           </button>
-          <button 
-             onClick={onRestart}
-             className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 md:px-4 py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
-          >
-            {isTeacherView ? (
+          {isTeacherView && (
+            <button 
+               onClick={onRestart}
+               className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 md:px-4 py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+            >
               <span>ปิด</span>
-            ) : (
-              <><RefreshCw size={14} className="shrink-0" /><span>ทำใหม่</span></>
-            )}
-          </button>
+            </button>
+          )}
         </div>
       </header>
 
