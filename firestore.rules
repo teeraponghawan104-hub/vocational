@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // For a simple school assessment app, allow read/write to the assessments collection.
+    // In a production environment with Authentication, you should restrict this.
+    match /assessments/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

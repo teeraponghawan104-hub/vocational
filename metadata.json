@@ -1,0 +1,6 @@
+{
+  "name": "แบบทดสอบความพร้อมทางอาชีพ (Vocational Readiness Test)",
+  "description": "แบบทดสอบวัดความสนใจทางอาชีพ ความถนัด และความมั่นใจในตนเอง พร้อมระบบป้องกันการโกงและ Dashboard สำหรับครู",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
