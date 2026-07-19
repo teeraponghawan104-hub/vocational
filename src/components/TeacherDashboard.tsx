@@ -237,27 +237,35 @@ export default function TeacherDashboard({ onBack }: Props) {
 
   return (
     <div className="min-h-screen print:h-auto print:bg-white bg-slate-50 text-slate-900 pb-12 animate-in fade-in duration-300 font-sans" id="pdf-teacher-content">
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
-        <div className="flex items-center gap-2 md:gap-4">
-          <button onClick={onBack} className="inline-flex items-center gap-2 p-2 px-3 hover:bg-slate-100 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium text-sm">
-            <ArrowLeft size={18} />
-            <span className="hidden sm:inline">กลับหน้าหลัก</span>
-          </button>
-          <div className="hidden sm:flex w-8 h-8 bg-white rounded-lg items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
-            <img src="/school-logo.png" alt="School Logo" className="w-full h-full object-contain" />
+      <header className="h-auto md:h-16 py-3 md:py-0 bg-white border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden gap-3 md:gap-0" data-hide-print="true">
+        <div className="flex items-center gap-2 md:gap-4 justify-between md:justify-start w-full md:w-auto">
+          <div className="flex items-center gap-2">
+            <button onClick={onBack} className="inline-flex items-center gap-2 p-2 px-3 hover:bg-slate-100 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium text-sm">
+              <ArrowLeft size={18} />
+              <span className="hidden sm:inline">กลับหน้าหลัก</span>
+            </button>
+            <div className="hidden sm:flex w-8 h-8 bg-white rounded-lg items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
+              <img src="/school-logo.png" alt="School Logo" className="w-full h-full object-contain" />
+            </div>
+            <h1 className="text-sm md:text-lg font-semibold tracking-tight text-slate-800 whitespace-nowrap truncate">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| ระบบจัดการสำหรับครู</span></h1>
           </div>
-          <h1 className="text-base md:text-lg font-semibold tracking-tight text-slate-800 whitespace-nowrap">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| ระบบจัดการสำหรับครู</span></h1>
+          <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs md:hidden shrink-0 print:hidden whitespace-nowrap">
+            <Users size={14} className="shrink-0" />
+            <span>{results.length} คน</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2 py-1" data-hide-print="true">
-          <button onClick={handleDownloadPdf} className="flex items-center gap-2 bg-slate-50 text-slate-700 px-3 py-1.5 rounded-full border border-slate-200 hover:bg-slate-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0">
-            <Printer size={14} className="shrink-0" />
-            <span>พิมพ์ / PDF</span>
-          </button>
-          <button onClick={exportToCSV} className="flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1.5 rounded-full border border-emerald-200 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0">
-            <Download size={14} className="shrink-0" />
-            <span>ส่งออก CSV</span>
-          </button>
-          <div className="flex items-center gap-2 bg-indigo-50 px-3 md:px-4 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs md:text-sm shrink-0 print:hidden whitespace-nowrap">
+        <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-2" data-hide-print="true">
+          <div className="flex gap-2">
+            <button onClick={handleDownloadPdf} className="flex items-center justify-center gap-2 bg-slate-50 text-slate-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-slate-200 hover:bg-slate-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
+              <Printer size={14} className="shrink-0" />
+              <span>พิมพ์ / PDF</span>
+            </button>
+            <button onClick={exportToCSV} className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-emerald-200 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
+              <Download size={14} className="shrink-0" />
+              <span>ส่งออก CSV</span>
+            </button>
+          </div>
+          <div className="hidden md:flex items-center gap-2 bg-indigo-50 px-3 md:px-4 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs md:text-sm shrink-0 print:hidden whitespace-nowrap">
             <Users size={14} className="shrink-0" />
             <span>ทั้งหมด: {results.length} คน</span>
           </div>
@@ -404,7 +412,7 @@ export default function TeacherDashboard({ onBack }: Props) {
         {/* Filters */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="flex items-center gap-3 w-full md:w-auto">
-            <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl border border-slate-100">
+            <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl border border-slate-100 shrink-0">
               <Filter size={18} className="text-slate-400" />
             </div>
             <select
