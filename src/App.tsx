@@ -104,8 +104,13 @@ export default function App() {
               )}
             </div>
           </div>
-          <div className="mt-8 text-center text-xs text-slate-400 font-medium">
-            Developed by <span className="font-semibold text-slate-500">Thiw_Theerapong</span>
+          <div className="mt-8 text-center flex flex-col items-center gap-2">
+            <div className="text-xs text-slate-400 font-medium">
+              Developed by <span className="font-semibold text-slate-500">Thiw_Theerapong</span>
+            </div>
+            <p className="text-[10px] text-slate-400/80 max-w-sm px-4 leading-relaxed">
+              แบบประเมินนี้จัดทำขึ้นเพื่อการศึกษาเท่านั้น มิได้มีเจตนาละเมิดลิขสิทธิ์หรือนำไปใช้ในเชิงพาณิชย์
+            </p>
           </div>
         </div>
       )}

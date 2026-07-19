@@ -239,8 +239,9 @@ export default function TeacherDashboard({ onBack }: Props) {
     <div className="min-h-screen print:h-auto print:bg-white bg-slate-50 text-slate-900 pb-12 animate-in fade-in duration-300 font-sans" id="pdf-teacher-content">
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
         <div className="flex items-center gap-2 md:gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full transition text-slate-500 hover:text-slate-800">
-            <ArrowLeft size={20} />
+          <button onClick={onBack} className="inline-flex items-center gap-2 p-2 px-3 hover:bg-slate-100 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium text-sm">
+            <ArrowLeft size={18} />
+            <span className="hidden sm:inline">กลับหน้าหลัก</span>
           </button>
           <div className="hidden sm:flex w-8 h-8 bg-white rounded-lg items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
             <img src="/school-logo.png" alt="School Logo" className="w-full h-full object-contain" />

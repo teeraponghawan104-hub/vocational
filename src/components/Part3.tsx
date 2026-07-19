@@ -76,7 +76,7 @@ export default function Part3({ initialAnswers = [], onChange, onComplete }: Pro
       <div className="mb-4 shrink-0">
         <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1 block">ส่วนที่ 3 / 3</span>
         <h2 className="text-2xl font-bold text-slate-800 leading-tight">แบบทดสอบความมั่นใจในตนเอง (Self-Confidence Test)</h2>
-        <p className="text-slate-500 mt-2">โปรดพิจารณาข้อความต่อไปนี้และเลือกคำตอบที่ตรงกับความสนใจของคุณอีกครั้ง เพื่อวัดความแน่วแน่ในการตัดสินใจของคุณ</p>
+        <p className="text-slate-500 mt-2">โปรดพิจารณาข้อความต่อไปนี้และเลือกคำตอบที่ตรงกับความสนใจของคุณอีกครั้ง เพื่อวัดความมั่นใจในการตัดสินใจของคุณ</p>
       </div>
 
       <div className="space-y-3 flex-1 pb-10">

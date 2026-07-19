@@ -185,14 +185,9 @@ export default function AssessmentLockdown({ student, onComplete }: Props) {
       </div>
 
       {/* Bottom Validation Bar */}
-      <footer className="hidden md:flex h-12 bg-indigo-900 items-center px-8 shrink-0">
-        <div className="flex items-center gap-2 text-white/70 text-[10px] font-mono tracking-tighter">
-          <span className="bg-white/10 px-2 py-0.5 rounded">LOG: ASSESSMENT_ACTIVE</span>
-          <span className="bg-white/10 px-2 py-0.5 rounded">VALIDATION: PASSED</span>
-          <span className="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded border border-emerald-500/30">DB_CONNECTED: FIRESTORE_ACTIVE</span>
-        </div>
-        <div className="ml-auto text-white/50 text-[10px] uppercase tracking-widest">
-          Session: {student.studentNumber}-{Date.now().toString(16).slice(-4)}
+      <footer className="hidden md:flex h-12 bg-indigo-900 items-center justify-center px-8 shrink-0">
+        <div className="text-xs md:text-sm text-white/60 tracking-wide">
+          แบบประเมินนี้จัดทำขึ้นเพื่อการศึกษาเท่านั้น มิได้มีเจตนาละเมิดลิขสิทธิ์หรือนำไปใช้ในเชิงพาณิชย์
         </div>
       </footer>
     </div>
