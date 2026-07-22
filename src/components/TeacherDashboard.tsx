@@ -5,9 +5,9 @@ import { subscribeToAssessments, deleteAssessment } from '../db';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, Search, Filter, BarChart3, Users, Trash2, X, Download, Printer } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, PieChart, Pie } from 'recharts';
 import ResultDashboard from './ResultDashboard';
-import { getCareerRecommendations } from '../data';
+import { getCareerRecommendations, riasecInterpretations } from '../data';
 import { students } from '../studentData';
 
 interface Props {
@@ -43,8 +43,12 @@ export default function TeacherDashboard({ onBack }: Props) {
       const recommendations = getCareerRecommendations(r.part1Score);
       const sortedDpt = Object.entries(r.part2Score).sort((a, b) => (b[1] as number) - (a[1] as number));
       const date = new Date(r.timestamp).toLocaleString('th-TH');
+      
+      const studentRecord = students.find(s => s.room === r.student.room && s.number === r.student.studentNumber);
+      const studentId = studentRecord ? studentRecord.studentId : '-';
+
       return [
-        r.student.studentNumber, // could use ID if available, but using number here
+        studentId,
         r.student.firstName,
         r.student.lastName,
         r.student.room,
@@ -209,6 +213,33 @@ export default function TeacherDashboard({ onBack }: Props) {
   const midAptitudePct = aptitudeChartData[1]?.percentage || 0;
   const bottomAptitude = aptitudeChartData[2]?.name || '-';
   const bottomAptitudePct = aptitudeChartData[2]?.percentage || 0;
+
+  // Aggregate Confidence
+  const confidenceCounts = { high: 0, medium: 0, low: 0 };
+  filteredResults.forEach(r => {
+    if (r.part3ConsistencyPercentage >= 75) confidenceCounts.high++;
+    else if (r.part3ConsistencyPercentage >= 26) confidenceCounts.medium++;
+    else confidenceCounts.low++;
+  });
+  
+  const confidenceChartData = [
+    { name: 'มั่นใจสูง (75-100%)', value: confidenceCounts.high, fill: '#10b981' },
+    { name: 'มั่นใจปานกลาง (26-74%)', value: confidenceCounts.medium, fill: '#f59e0b' },
+    { name: 'มั่นใจต่ำ (0-25%)', value: confidenceCounts.low, fill: '#ef4444' },
+  ].filter(item => item.value > 0);
+
+  const topCareers = sortedHolland.slice(0, 3).map(([type, count]) => {
+    const interpretation = riasecInterpretations[type];
+    // Take first 3-5 words from careers string
+    const careerList = interpretation ? interpretation.careers.split(' ').slice(0, 4).join(', ') : '';
+    return {
+      type,
+      count,
+      percentage: filteredResults.length > 0 ? Math.round((count / filteredResults.length) * 100) : 0,
+      title: interpretation?.title.split(' ')[0] || type,
+      careers: careerList
+    };
+  });
 
   const totalStudents = students.length;
   const totalCompleted = results.length;
@@ -386,6 +417,71 @@ export default function TeacherDashboard({ onBack }: Props) {
                    <Bar dataKey="percentage" fill="#f59e0b" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" />
                  </BarChart>
                </ResponsiveContainer>
+             </div>
+          </div>
+        </div>
+
+        {/* New Trends Row */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">กลุ่มอาชีพที่เหมาะสมมากที่สุด 3 อันดับแรก</h2>
+             <div className="flex flex-col gap-4">
+                {topCareers.map((career, idx) => (
+                  <div key={idx} className="flex items-start gap-4">
+                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 font-bold text-lg">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm">{career.title} ({career.type})</h3>
+                      <p className="text-xs text-slate-500 mt-1">{career.careers}...</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden max-w-[150px]">
+                          <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${career.percentage}%` }}></div>
+                        </div>
+                        <span className="text-[10px] font-bold text-slate-400">{career.percentage}%</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {topCareers.length === 0 && (
+                  <div className="text-center text-slate-400 text-sm py-8">ยังไม่มีข้อมูล</div>
+                )}
+             </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
+             <div className="h-64 flex-1">
+               <ResponsiveContainer width="100%" height="100%">
+                 <PieChart>
+                   <Pie
+                     data={confidenceChartData}
+                     cx="50%"
+                     cy="50%"
+                     innerRadius={60}
+                     outerRadius={80}
+                     paddingAngle={5}
+                     dataKey="value"
+                     stroke="none"
+                   >
+                     {confidenceChartData.map((entry, index) => (
+                       <Cell key={`cell-${index}`} fill={entry.fill} />
+                     ))}
+                   </Pie>
+                   <Tooltip 
+                     contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
+                     formatter={(value: any) => [`${value} คน`, 'จำนวน']}
+                   />
+                 </PieChart>
+               </ResponsiveContainer>
+             </div>
+             <div className="flex justify-center gap-4 mt-2">
+                {confidenceChartData.map((entry, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.fill }}></div>
+                    <span className="text-xs font-medium text-slate-600">{entry.name}</span>
+                  </div>
+                ))}
              </div>
           </div>
         </div>

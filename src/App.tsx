@@ -49,6 +49,14 @@ export default function App() {
             </div>
             
             <div className="p-8 bg-[#FDFDFF]">
+              <div className="mb-6 space-y-3">
+                <p className="text-sm font-medium text-slate-600">แบบทดสอบนี้จะช่วยให้นักเรียนค้นพบ:</p>
+                <ul className="text-xs text-slate-500 space-y-2 font-medium">
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></div>บุคลิกภาพและความสนใจ (Holland Codes)</li>
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0"></div>ความถนัดทางอาชีพ (Aptitude)</li>
+                  <li className="flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></div>ความมั่นใจในการตัดสินใจของตนเอง</li>
+                </ul>
+              </div>
               <StudentForm onSubmit={startAssessment} />
             </div>
             <div className="bg-slate-50 p-4 text-center border-t border-slate-200">

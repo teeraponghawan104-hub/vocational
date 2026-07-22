@@ -4,7 +4,7 @@ import { getCareerRecommendations, riasecInterpretations, dptInterpretations } f
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
-import { CheckCircle2, User, RefreshCw, BookOpen, Briefcase, GraduationCap, Printer } from 'lucide-react';
+import { CheckCircle2, User, RefreshCw, BookOpen, Briefcase, GraduationCap, Printer, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -105,14 +105,24 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
       const tempPdf = new jsPDF();
       const imgProps = tempPdf.getImageProperties(dataUrl);
       
-      // สร้าง PDF ให้มีขนาดเท่ากับเนื้อหาพอดี เป็นไฟล์เต็มแผ่น ไม่ต้องตัดหน้า
-      const pdf = new jsPDF({
-        orientation: imgProps.width > imgProps.height ? 'l' : 'p',
-        unit: 'px',
-        format: [imgProps.width, imgProps.height]
-      });
+      const pdfWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       
-      pdf.addImage(dataUrl, 'PNG', 0, 0, imgProps.width, imgProps.height);
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      let position = 0;
+      let heightLeft = pdfHeight;
+      
+      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+      heightLeft -= pageHeight;
+      
+      while (heightLeft > 0) {
+        position -= pageHeight;
+        pdf.addPage();
+        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
+        heightLeft -= pageHeight;
+      }
       
       pdf.save(`ผลการทดสอบ_${student.firstName}_${student.lastName}.pdf`);
     } catch (err) {
@@ -127,6 +137,58 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
   };
 
 
+  const handleSaveImage = async () => {
+    const element = document.getElementById('pdf-content');
+    if (!element) return;
+    
+    // Save original styles
+    const originalHeight = element.style.height;
+    const originalOverflow = element.style.overflow;
+    const originalWidth = element.style.width;
+    const originalMaxWidth = element.style.maxWidth;
+    
+    // Force a specific wide width
+    element.style.height = 'auto';
+    element.style.overflow = 'visible';
+    element.style.width = '1000px';
+    element.style.maxWidth = '1000px';
+    
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    try {
+      const dataUrl = await toPng(element, { 
+        quality: 1, 
+        backgroundColor: '#FDFDFF',
+        pixelRatio: 2,
+        width: 1000,
+        height: element.scrollHeight,
+        style: {
+          transform: 'scale(1)',
+          transformOrigin: 'top left',
+          width: '1000px'
+        },
+        filter: (node: any) => {
+          if (node.hasAttribute && node.hasAttribute('data-hide-print')) return false;
+          if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) return false;
+          return true;
+        }
+      });
+      
+      const link = document.createElement('a');
+      link.download = `ผลการทดสอบ_${student.firstName}_${student.lastName}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Error generating Image', err);
+      alert('เกิดข้อผิดพลาดในการบันทึกรูปภาพ');
+    } finally {
+      element.style.height = originalHeight;
+      element.style.overflow = originalOverflow;
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
+    }
+  };
+
   return (
     <div className="flex flex-col h-screen print:h-auto print:overflow-visible w-full bg-[#FDFDFF] text-slate-900 overflow-y-auto font-sans" id="pdf-content">
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
@@ -138,11 +200,18 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
         </div>
         <div className="flex items-center gap-2" data-hide-print="true">
           <button
+            onClick={handleSaveImage}
+            className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 md:px-4 py-1.5 rounded-lg hover:bg-emerald-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+          >
+            <Download size={14} className="shrink-0" />
+            <span className="hidden md:inline">บันทึกรูปภาพ</span>
+          </button>
+          <button
             onClick={handleDownloadPdf}
             className="inline-flex items-center gap-2 bg-indigo-600 text-white px-3 md:px-4 py-1.5 rounded-lg hover:bg-indigo-700 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
           >
             <Printer size={14} className="shrink-0" />
-            <span>พิมพ์ / PDF</span>
+            <span className="hidden md:inline">พิมพ์ / PDF</span>
           </button>
           {isTeacherView ? (
             <button 
@@ -192,7 +261,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
           <div className="p-8 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
             
             {/* Part 1: RIASEC */}
-            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col">
+            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">1</div>
                 สรุปความสนใจด้านอาชีพ (RIASEC)
@@ -218,7 +287,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Part 2: D-P-T */}
-            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col">
+            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">2</div>
                 สรุปความถนัดทางอาชีพ (D-P-T)
