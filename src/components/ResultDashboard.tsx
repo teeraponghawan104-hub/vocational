@@ -137,6 +137,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
   };
 
 
+
   const handleSaveImage = async () => {
     const element = document.getElementById('pdf-content');
     if (!element) return;
@@ -191,41 +192,46 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
 
   return (
     <div className="flex flex-col h-screen print:h-auto print:overflow-visible w-full bg-[#FDFDFF] text-slate-900 overflow-y-auto font-sans" id="pdf-content">
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
-        <div className="flex items-center gap-2 md:gap-3">
+      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
+        <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 pr-2">
           <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
             <img src="/school-logo.png" alt="School Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-base md:text-lg font-semibold tracking-tight text-slate-800 whitespace-nowrap">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| แบบทดสอบความพร้อมทางอาชีพ</span></h1>
+          <h1 className="text-sm sm:text-base md:text-lg font-semibold tracking-tight text-slate-800 truncate">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| แบบทดสอบความพร้อมทางอาชีพ</span></h1>
         </div>
-        <div className="flex items-center gap-2" data-hide-print="true">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0" data-hide-print="true">
           <button
             onClick={handleSaveImage}
-            className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-200 px-3 md:px-4 py-1.5 rounded-lg hover:bg-emerald-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+            className="inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-200 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-emerald-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
+            title="บันทึกรูปภาพ"
           >
-            <Download size={14} className="shrink-0" />
+            <Download size={16} className="shrink-0" />
             <span className="hidden md:inline">บันทึกรูปภาพ</span>
           </button>
           <button
             onClick={handleDownloadPdf}
-            className="inline-flex items-center gap-2 bg-indigo-600 text-white px-3 md:px-4 py-1.5 rounded-lg hover:bg-indigo-700 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+            className="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white border border-transparent w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-indigo-700 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
+            title="พิมพ์ / PDF"
           >
-            <Printer size={14} className="shrink-0" />
+            <Printer size={16} className="shrink-0" />
             <span className="hidden md:inline">พิมพ์ / PDF</span>
           </button>
           {isTeacherView ? (
             <button 
                onClick={onRestart}
-               className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 md:px-4 py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+               className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
             >
-              <span>ปิด</span>
+              <span className="hidden md:inline">ปิด</span>
+              <span className="md:hidden">ปิด</span>
             </button>
           ) : (
             <button 
                onClick={onRestart}
-               className="inline-flex items-center gap-2 bg-white border border-slate-200 text-slate-600 px-3 md:px-4 py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+               className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
+               title="กลับหน้าหลัก"
             >
-              <span>กลับหน้าหลัก</span>
+              <RefreshCw size={16} className="shrink-0 md:hidden" />
+              <span className="hidden md:inline">กลับหน้าหลัก</span>
             </button>
           )}
         </div>
@@ -235,51 +241,51 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
         <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
           
           {/* Header */}
-          <div className="border-b border-slate-100 p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-6">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-2xl uppercase border-4 border-white shadow-sm">
+          <div className="border-b border-slate-100 p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl sm:text-2xl uppercase border-4 border-white shadow-sm shrink-0">
                 {student.firstName.charAt(0)}{student.lastName.charAt(0)}
               </div>
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">ผลการประเมินความพร้อมทางอาชีพ</div>
-                <h1 className="text-3xl font-bold text-slate-800">{student.firstName} {student.lastName}</h1>
-                <p className="text-slate-500 font-medium mt-1">ชั้น {student.room} • เลขที่ {student.studentNumber}</p>
+                <div className="text-[10px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">ผลการประเมินความพร้อมทางอาชีพ</div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">{student.firstName} {student.lastName}</h1>
+                <p className="text-slate-500 font-medium text-xs sm:text-sm md:text-base mt-1">ชั้น {student.room} • เลขที่ {student.studentNumber}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-4 bg-slate-50 px-6 py-4 rounded-2xl border border-slate-100">
+            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 w-full md:w-auto justify-between md:justify-start">
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 text-right">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
-                <div className="text-2xl font-black text-slate-800 text-right">{part3ConsistencyPercentage}%</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 text-left md:text-right">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-800 text-left md:text-right">{part3ConsistencyPercentage}%</div>
               </div>
-              <div className={cn("px-3 py-1.5 rounded-lg font-bold text-xs uppercase tracking-wider", confidence.bg, confidence.color)}>
+              <div className={cn("px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center shrink-0", confidence.bg, confidence.color)}>
                 ระดับ{confidence.text}
               </div>
             </div>
           </div>
 
-          <div className="p-8 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <div className="p-5 sm:p-8 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
             
             {/* Part 1: RIASEC */}
-            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">1</div>
                 สรุปความสนใจด้านอาชีพ (RIASEC)
               </h3>
-              <div className="h-64 mb-6">
+              <div className="h-[300px] mb-6">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="75%" data={riasecData}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="55%" data={riasecData}>
                     <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 10, fontWeight: 600 }} />
                     <Radar name="Score" dataKey="score" stroke="#4f46e5" strokeWidth={2} fill="#6366f1" fillOpacity={0.2} />
                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-sm mt-auto">
+              <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mt-auto">
                 {riasecData.map(d => (
-                  <div key={d.subject} className="flex justify-between items-center bg-white px-4 py-3 rounded-xl shadow-sm border border-slate-100">
-                    <span className="font-medium text-slate-600">{d.label.split(' ')[0]}</span>
+                  <div key={d.subject} className="flex justify-between items-center bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-sm border border-slate-100">
+                    <span className="font-medium text-slate-600 truncate mr-2">{d.label.split(' ')[0]}</span>
                     <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{d.score}</span>
                   </div>
                 ))}
@@ -287,19 +293,19 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Part 2: D-P-T */}
-            <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">2</div>
                 สรุปความถนัดทางอาชีพ (D-P-T)
               </h3>
               <div className="h-64 mt-4 mb-6">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={dptData} layout="vertical" margin={{ top: 5, right: 30, left: 40, bottom: 5 }}>
+                  <BarChart data={dptData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                    <XAxis type="number" domain={[0, 36]} tick={{ fill: '#94a3b8' }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" width={100} tick={{ fill: '#475569', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                    <XAxis type="number" domain={[0, 36]} tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" width={90} tick={{ fill: '#475569', fontSize: 10, fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                    <Bar dataKey="score" fill="#4f46e5" radius={[0, 8, 8, 0]} barSize={24} />
+                    <Bar dataKey="score" fill="#4f46e5" radius={[0, 8, 8, 0]} barSize={20} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -317,11 +323,11 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Detailed Interpretation */}
-            <div className="lg:col-span-2 space-y-8">
-              <div className="bg-indigo-600 p-1 rounded-3xl shadow-lg">
-                <div className="bg-white rounded-[22px] p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-8 pb-6 border-b border-slate-100">
-                    <div className="bg-indigo-100 text-indigo-600 p-3 rounded-xl">
+            <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+              <div className="bg-indigo-600 p-1 rounded-2xl md:rounded-3xl shadow-lg">
+                <div className="bg-white rounded-[14px] md:rounded-[22px] p-5 sm:p-8 md:p-10">
+                  <div className="flex items-center gap-3 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100">
+                    <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-xl shrink-0">
                       <User size={24} strokeWidth={2} />
                     </div>
                     <div>
