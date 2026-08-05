@@ -21,8 +21,11 @@
     background-color: white !important;
   }
   /* Force charts to render correctly in print */
-  .recharts-wrapper {
+  .recharts-responsive-container,
+  .recharts-wrapper,
+  .recharts-surface {
     max-width: 100% !important;
+    overflow: visible !important;
   }
 }
 

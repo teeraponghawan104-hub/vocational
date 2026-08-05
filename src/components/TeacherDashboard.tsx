@@ -363,7 +363,7 @@ export default function TeacherDashboard({ onBack }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2 print:grid-cols-2">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">การกระจายบุคลิกภาพ (Holland)</h2>
-             <div className="h-64 print:h-40">
+             <div className="h-64 print:h-48">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={hollandChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -380,7 +380,7 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">การกระจายความถนัด (Aptitude)</h2>
-             <div className="h-64 print:h-40">
+             <div className="h-64 print:h-48">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={aptitudeChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -427,7 +427,7 @@ export default function TeacherDashboard({ onBack }: Props) {
            
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
-             <div className="h-64 flex-1 print:h-40">
+             <div className="h-64 flex-1 print:h-48">
                <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
                    <Pie
