@@ -1,8 +1,69 @@
 import { AssessmentResult } from './types';
 import { db } from './firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 
 const COLLECTION_NAME = 'assessments';
+const LOCKS_COLLECTION = 'student_locks';
+
+export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    const lockSnap = await getDoc(lockRef);
+    const now = Date.now();
+    
+    if (lockSnap.exists()) {
+      const data = lockSnap.data();
+      if (data.is_locked) {
+        // Check timeout (15 mins = 15 * 60 * 1000)
+        const lockedAt = data.locked_at || 0;
+        if (now - lockedAt < 15 * 60 * 1000 && data.locked_by !== sessionId) {
+          return false; // Locked by someone else and not expired
+        }
+      }
+    }
+    
+    await setDoc(lockRef, {
+      is_locked: true,
+      locked_by: sessionId,
+      locked_at: now
+    });
+    return true;
+  } catch (err) {
+    console.error("Error acquiring lock:", err);
+    // If network fails, we might just allow or block. Let's allow fallback or block.
+    // Better to block or show error, but we'll return false if completely failed.
+    return false;
+  }
+};
+
+export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    const lockSnap = await getDoc(lockRef);
+    if (lockSnap.exists() && lockSnap.data().locked_by === sessionId) {
+      await updateDoc(lockRef, {
+        is_locked: false,
+        locked_by: null,
+        locked_at: null
+      });
+    }
+  } catch (err) {
+    console.error("Error releasing lock:", err);
+  }
+};
+
+export const forceReleaseLock = async (studentId: string): Promise<void> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    await updateDoc(lockRef, {
+      is_locked: false,
+      locked_by: null,
+      locked_at: null
+    });
+  } catch (err) {
+    console.error("Error force releasing lock:", err);
+  }
+};
 
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
   try {

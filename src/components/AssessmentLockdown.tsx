@@ -1,17 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StudentInfo, AssessmentResult, Part1Answer, Part2Answer } from '../types';
 import Part1 from './Part1';
 import Part2 from './Part2';
 import Part3 from './Part3';
-import { saveAssessment } from '../db';
+import { saveAssessment, acquireLock, releaseLock } from '../db';
+import { LogOut } from 'lucide-react';
 
 interface Props {
   student: StudentInfo;
   onComplete: (result: AssessmentResult) => void;
+  onCancel: () => void;
 }
 
-export default function AssessmentLockdown({ student, onComplete }: Props) {
+export default function AssessmentLockdown({ student, onComplete, onCancel }: Props) {
   const autosaveKey = `autosave-${student.room}-${student.studentNumber}`;
+
+  const sessionIdRef = useRef<string>('');
+  const [lockStatus, setLockStatus] = useState<'checking' | 'acquired' | 'denied'>('checking');
+  
+  useEffect(() => {
+    if (!sessionIdRef.current) {
+      sessionIdRef.current = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+    }
+    const studentId = `${student.room}-${student.studentNumber}`;
+    let isMounted = true;
+
+    const checkLock = async () => {
+      const success = await acquireLock(studentId, sessionIdRef.current);
+      if (isMounted) {
+        setLockStatus(success ? 'acquired' : 'denied');
+      }
+    };
+    checkLock();
+
+    const handleBeforeUnload = () => {
+      releaseLock(studentId, sessionIdRef.current);
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      isMounted = false;
+      releaseLock(studentId, sessionIdRef.current);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [student.room, student.studentNumber]);
+
+  const handleCancel = async () => {
+    if (lockStatus === 'acquired') {
+      const studentId = `${student.room}-${student.studentNumber}`;
+      await releaseLock(studentId, sessionIdRef.current);
+    }
+    onCancel();
+  };
 
   const loadAutosave = () => {
     try {
@@ -101,6 +141,10 @@ export default function AssessmentLockdown({ student, onComplete }: Props) {
     try {
       await saveAssessment(result);
       localStorage.removeItem(autosaveKey);
+      if (lockStatus === 'acquired') {
+        const studentId = `${student.room}-${student.studentNumber}`;
+        await releaseLock(studentId, sessionIdRef.current);
+      }
       onComplete(result);
     } catch (e) {
       console.error("Failed to save assessment:", e);
@@ -118,7 +162,47 @@ export default function AssessmentLockdown({ student, onComplete }: Props) {
           </div>
           <h1 className="text-base md:text-lg font-semibold tracking-tight text-slate-800 whitespace-nowrap">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| แบบทดสอบความพร้อมทางอาชีพ</span></h1>
         </div>
+        <button
+          onClick={handleCancel}
+          className="flex items-center gap-2 px-3 py-1.5 md:px-4 md:py-2 text-sm font-medium text-slate-600 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-rose-100"
+        >
+          <LogOut size={16} />
+          <span className="hidden sm:inline">ยกเลิกและกลับหน้าหลัก</span>
+        </button>
       </header>
+
+      {/* Checking Lock Overlay */}
+      {lockStatus === 'checking' && (
+        <div className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm flex items-center justify-center z-[9999]">
+          <div className="bg-white rounded-2xl p-6 shadow-xl flex items-center gap-4">
+            <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-slate-700 font-medium text-sm">กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...</span>
+          </div>
+        </div>
+      )}
+
+      {/* Lock Denied Modal */}
+      {lockStatus === 'denied' && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
+          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+            <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-6 shadow-sm border border-rose-200">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-slate-800 mb-3">เข้าใช้งานไม่ได้</h3>
+            <p className="text-slate-600 text-sm leading-relaxed mb-8">
+              ไม่สามารถเข้าใช้งานได้ เนื่องจากมีผู้ใช้งานท่านอื่นกำลังทำแบบทดสอบในชื่อนี้อยู่
+            </p>
+            <button
+              onClick={onCancel}
+              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition-colors shadow-md"
+            >
+              กลับไปเลือกชื่อใหม่
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-1 overflow-hidden flex-col md:flex-row">
         {/* Sidebar: Student & Progress */}

@@ -1,8 +1,9 @@
-import { toPng } from "html-to-image";
 import React, { useState } from 'react';
 import { AssessmentResult } from '../types';
 import { getCareerRecommendations, riasecInterpretations, dptInterpretations } from '../data';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import { CheckCircle2, User, RefreshCw, BookOpen, Briefcase, GraduationCap, Printer, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -30,7 +31,7 @@ const DPT_LABELS: Record<string, string> = {
 export default function ResultDashboard({ result, onRestart, isTeacherView }: Props) {
   const { student, part1Score, part2Score, part3ConsistencyPercentage } = result;
   const [showPrintWarning, setShowPrintWarning] = useState(false);
-  
+
   const riasecData = Object.entries(part1Score).map(([key, value]) => ({
     subject: key,
     fullMark: 18,
@@ -60,8 +61,52 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
   const highestDptKey = sortedDpt[0][0];
   const dominantDpt = dptInterpretations[highestDptKey];
 
-  const handleDownloadPdf = () => {
-    window.print();
+  const handleDownloadPdf = async () => {
+    const element = document.getElementById('pdf-content');
+    if (!element) return;
+    
+    const originalHeight = element.style.height;
+    const originalOverflow = element.style.overflow;
+    const originalWidth = element.style.width;
+    const originalMaxWidth = element.style.maxWidth;
+    
+    element.style.height = 'auto';
+    element.style.overflow = 'visible';
+    element.style.width = '1000px';
+    element.style.maxWidth = '1000px';
+    
+    window.dispatchEvent(new Event('resize'));
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    try {
+      const dataUrl = await toPng(element, { 
+        quality: 1, 
+        backgroundColor: '#FDFDFF',
+        pixelRatio: 2,
+        style: { transform: 'scale(1)', transformOrigin: 'top left', width: '1000px' },
+        filter: (node: any) => {
+          if (node.hasAttribute && node.hasAttribute('data-hide-print')) return false;
+          if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) return false;
+          return true;
+        }
+      });
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [1000, element.scrollHeight]
+      });
+      pdf.addImage(dataUrl, 'PNG', 0, 0, 1000, element.scrollHeight);
+      pdf.save(`ผลการทดสอบ_${student.firstName}_${student.lastName}.pdf`);
+    } catch (err) {
+      console.error('Error generating PDF', err);
+      alert('เกิดข้อผิดพลาดในการสร้าง PDF');
+    } finally {
+      element.style.height = originalHeight;
+      element.style.overflow = originalOverflow;
+      element.style.width = originalWidth;
+      element.style.maxWidth = originalMaxWidth;
+    }
   };
 
 
@@ -196,10 +241,10 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
       </header>
 
       <div className="max-w-5xl mx-auto p-4 md:p-8 w-full animate-in fade-in duration-500 pb-20 print:p-0 print:m-0 print:max-w-none">
-        <div className={cn("bg-white print:rounded-none print:border-none print:shadow-none", "rounded-3xl shadow-sm border border-slate-200 overflow-hidden")}>
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden print:rounded-none print:border-none print:shadow-none">
           
           {/* Header */}
-          <div className={cn("border-b border-slate-100 p-6 md:p-10 flex justify-between gap-6 print:p-4 print:pb-2 print:flex-row print:items-center print:gap-4 print:break-inside-avoid", "flex-col md:flex-row items-start md:items-center")}>
+          <div className="border-b border-slate-100 p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 print:p-4 print:pb-2 print:flex-row print:items-center print:gap-4">
             <div className="flex items-center gap-4 sm:gap-6 print:gap-3">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl sm:text-2xl uppercase border-4 border-white shadow-sm shrink-0 print:w-10 print:h-10 print:text-lg">
                 {student.firstName.charAt(0)}{student.lastName.charAt(0)}
@@ -211,10 +256,10 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
               </div>
             </div>
             
-            <div className={cn("flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 justify-between print:px-3 print:py-2 print:rounded-lg", "w-full md:w-auto md:justify-start")}>
+            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 w-full md:w-auto justify-between md:justify-start print:px-3 print:py-2 print:rounded-lg">
               <div>
-                <div className={cn("text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 print:text-[8px] print:mb-0", "text-left md:text-right")}>ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
-                <div className={cn("text-xl sm:text-2xl font-black text-slate-800 print:text-lg", "text-left md:text-right")}>{part3ConsistencyPercentage}%</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 text-left md:text-right print:text-[8px] print:mb-0">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-800 text-left md:text-right print:text-lg">{part3ConsistencyPercentage}%</div>
               </div>
               <div className={cn("px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center shrink-0 print:px-2 print:py-1 print:text-[8px]", confidence.bg, confidence.color)}>
                 ระดับ{confidence.text}
@@ -222,7 +267,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
           </div>
 
-          <div className={cn("p-5 sm:p-8 md:p-10 grid gap-6 lg:gap-10 print:p-2 print:grid-cols-2 print:gap-2", "grid-cols-1 md:grid-cols-2")}>
+          <div className="p-5 sm:p-8 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 print:p-2 print:grid-cols-2 print:gap-2">
             
             {/* Part 1: RIASEC */}
             <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-lg print:border-slate-200">
@@ -230,10 +275,10 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm print:w-6 print:h-6 print:text-xs">1</div>
                 สรุปความสนใจด้านอาชีพ (RIASEC)
               </h3>
-              <div className={cn("w-full mx-auto mb-6 print:h-[180px] print:mb-2", "h-[250px] sm:h-[300px] max-w-sm")}>
+              <div className="h-[250px] sm:h-[300px] w-full max-w-sm mx-auto mb-6 print:h-[180px] print:mb-2">
                 <ResponsiveContainer width="100%" height="100%">
-                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={riasecData}>
-                    <PolarGrid stroke="#cbd5e1" />
+                  <RadarChart cx="50%" cy="50%" outerRadius="60%" data={riasecData}>
+                    <PolarGrid stroke="#e2e8f0" />
                     <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
                     <Radar name="Score" dataKey="score" stroke="#4f46e5" strokeWidth={2} fill="#6366f1" fillOpacity={0.2} isAnimationActive={false} />
                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
@@ -243,7 +288,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
               <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mt-auto print:gap-1 print:text-[10px]">
                 {riasecData.map(d => (
                   <div key={d.subject} className="flex justify-between items-center bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-sm border border-slate-100 print:px-2 print:py-1 print:rounded-md">
-                    <span className="font-medium text-slate-600 mr-2">{d.label.split(' ')[0]}</span>
+                    <span className="font-medium text-slate-600 truncate mr-2">{d.label.split(' ')[0]}</span>
                     <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md print:bg-transparent print:px-0 print:py-0">{d.score}</span>
                   </div>
                 ))}
@@ -256,12 +301,12 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm print:w-6 print:h-6 print:text-xs">2</div>
                 สรุปความถนัดทางอาชีพ (D-P-T)
               </h3>
-              <div className={cn("h-full mt-4 mb-6 print:h-[150px] print:mt-1 print:mb-2 w-full mx-auto", "min-h-[220px] sm:min-h-[256px] max-w-sm")}>
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="min-h-[220px] sm:min-h-[256px] h-full mt-4 mb-6 print:h-[150px] print:mt-1 print:mb-2 w-full max-w-sm mx-auto">
+                <ResponsiveContainer width="100%" height={250}>
                   <BarChart data={dptData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
                     <XAxis type="number" domain={[0, 36]} tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" width={110} tick={{ fill: '#475569', fontSize: 10, fontWeight: 600 }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" width={90} tick={{ fill: '#475569', fontSize: 10, fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                     <Bar dataKey="score" fill="#4f46e5" radius={[0, 8, 8, 0]} barSize={20} isAnimationActive={false} />
                   </BarChart>
@@ -298,7 +343,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
                     <h3 className="text-xl font-bold text-indigo-700 mb-2 print:text-sm print:mb-1">{dominantRiasec.title}</h3>
                   </div>
 
-                  <div className={cn("grid gap-8 print:gap-4", "grid-cols-1 md:grid-cols-2")}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4">
                     <div className="space-y-6 print:space-y-2">
                       <div>
                         <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">

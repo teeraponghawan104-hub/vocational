@@ -126,7 +126,11 @@ export default function App() {
       {step === 'assessment' && studentInfo && (
         <AssessmentLockdown 
           student={studentInfo} 
-          onComplete={finishAssessment} 
+          onComplete={finishAssessment}
+          onCancel={() => {
+            setStudentInfo(null);
+            setStep('login');
+          }}
         />
       )}
 
