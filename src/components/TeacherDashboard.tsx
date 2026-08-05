@@ -280,7 +280,7 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
         </div>
       </header>
-      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-2 print:px-0 print:scale-[0.9] print:origin-top">
+      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-2 print:px-0">
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 print:gap-2 print:mb-2">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
@@ -481,7 +481,7 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
         </div>
         
-        <div className="print:break-before-page"></div>
+        <div className="print:hidden"></div>
 
         {/* Filters */}
         <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between print:hidden">
@@ -513,7 +513,7 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print:hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm text-left text-slate-500">
               <thead className="text-xs text-slate-400 uppercase bg-slate-50/50 font-bold tracking-wider">
