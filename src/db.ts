@@ -1,6 +1,6 @@
 import { AssessmentResult } from './types';
 import { db } from './firebase';
-import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, runTransaction } from 'firebase/firestore';
 
 const COLLECTION_NAME = 'assessments';
 const LOCKS_COLLECTION = 'student_locks';
@@ -32,42 +32,46 @@ export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void)
 export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
   try {
     const lockRef = doc(db, LOCKS_COLLECTION, studentId);
-    const lockSnap = await getDoc(lockRef);
-    const now = Date.now();
-    
-    if (lockSnap.exists()) {
-      const data = lockSnap.data();
-      if (data.is_locked) {
-        // Check timeout (15 seconds = 15 * 1000)
-        const lockedAt = data.locked_at || 0;
-        if (now - lockedAt < 15 * 1000 && data.locked_by !== sessionId) {
-          return false; // Locked by someone else and not expired
+    return await runTransaction(db, async (transaction) => {
+      const lockSnap = await transaction.get(lockRef);
+      const now = Date.now();
+      
+      if (lockSnap.exists()) {
+        const data = lockSnap.data();
+        if (data.is_locked) {
+          // Check timeout (15 seconds = 15 * 1000)
+          const lockedAt = data.locked_at || 0;
+          if (now - lockedAt < 15 * 1000 && data.locked_by !== sessionId) {
+            return false; // Locked by someone else and not expired
+          }
         }
       }
-    }
-    
-    await setDoc(lockRef, {
-      is_locked: true,
-      locked_by: sessionId,
-      locked_at: now
+      
+      transaction.set(lockRef, {
+        is_locked: true,
+        locked_by: sessionId,
+        locked_at: now
+      });
+      return true;
     });
-    return true;
   } catch (err) {
     console.error("Error acquiring lock:", err);
-    // If network fails, we allow them to proceed so they aren't permanently locked out
-    return true;
+    // If it fails (like permission denied), return false so they are blocked properly
+    return false;
   }
 };
 
 export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
   try {
     const lockRef = doc(db, LOCKS_COLLECTION, studentId);
-    const lockSnap = await getDoc(lockRef);
-    if (lockSnap.exists() && lockSnap.data().locked_by === sessionId) {
-      await updateDoc(lockRef, {
-        locked_at: Date.now()
-      });
-    }
+    await runTransaction(db, async (transaction) => {
+      const lockSnap = await transaction.get(lockRef);
+      if (lockSnap.exists() && lockSnap.data().locked_by === sessionId) {
+        transaction.update(lockRef, {
+          locked_at: Date.now()
+        });
+      }
+    });
   } catch (err) {
     console.error("Error renewing lock:", err);
   }
@@ -76,14 +80,16 @@ export const renewLock = async (studentId: string, sessionId: string): Promise<v
 export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
   try {
     const lockRef = doc(db, LOCKS_COLLECTION, studentId);
-    const lockSnap = await getDoc(lockRef);
-    if (lockSnap.exists() && lockSnap.data().locked_by === sessionId) {
-      await updateDoc(lockRef, {
-        is_locked: false,
-        locked_by: null,
-        locked_at: null
-      });
-    }
+    await runTransaction(db, async (transaction) => {
+      const lockSnap = await transaction.get(lockRef);
+      if (lockSnap.exists() && lockSnap.data().locked_by === sessionId) {
+        transaction.update(lockRef, {
+          is_locked: false,
+          locked_by: null,
+          locked_at: null
+        });
+      }
+    });
   } catch (err) {
     console.error("Error releasing lock:", err);
   }
@@ -92,10 +98,12 @@ export const releaseLock = async (studentId: string, sessionId: string): Promise
 export const forceReleaseLock = async (studentId: string): Promise<void> => {
   try {
     const lockRef = doc(db, LOCKS_COLLECTION, studentId);
-    await updateDoc(lockRef, {
-      is_locked: false,
-      locked_by: null,
-      locked_at: null
+    await runTransaction(db, async (transaction) => {
+      transaction.update(lockRef, {
+        is_locked: false,
+        locked_by: null,
+        locked_at: null
+      });
     });
   } catch (err) {
     console.error("Error force releasing lock:", err);
