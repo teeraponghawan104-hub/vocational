@@ -103,7 +103,7 @@ export default function TeacherDashboard({ onBack }: Props) {
   };
 
 
-  const rooms = Array.from(new Set(results.filter(r => r && r.student).map(r => r.student.room))).sort();
+  const rooms = Array.from(new Set(students.map(s => s.room))).sort();
 
   const filteredResults = results.filter(r => {
     if (!r || !r.student || !r.part1Score || !r.part2Score) return false;
