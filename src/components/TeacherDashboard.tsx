@@ -280,10 +280,10 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
         </div>
       </header>
-      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-4 print:px-0">
+      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-2 print:px-0 print:scale-[0.9] print:origin-top">
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 print:gap-4 print:mb-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-4 print:rounded-lg">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 print:gap-2 print:mb-2">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
             <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 print:w-10 print:h-10 print:rounded-lg"><Users size={28} className="print:w-5 print:h-5" /></div>
             <div className="flex-1">
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1 print:text-[10px]">
@@ -298,15 +298,15 @@ export default function TeacherDashboard({ onBack }: Props) {
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-4 print:rounded-lg">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
             <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 print:w-10 print:h-10 print:rounded-lg"><BarChart3 size={28} className="print:w-5 print:h-5" /></div>
             <div>
               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1 print:text-[10px]">ความมั่นใจเฉลี่ย</p>
               <p className="text-3xl font-bold text-slate-800 print:text-xl">{avgConsistency}%</p>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors print:p-3 print:rounded-lg">
-            <div className="flex items-center gap-3 mb-2 print:gap-2 print:mb-1">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
+            <div className="flex items-center gap-3 mb-2 print:gap-1 print:mb-1">
               <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0 print:w-8 print:h-8 print:rounded-lg"><BarChart3 size={20} className="print:w-4 print:h-4" /></div>
               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight print:text-[8px]">บุคลิกภาพ<br/>(Holland)</p>
             </div>
@@ -331,8 +331,8 @@ export default function TeacherDashboard({ onBack }: Props) {
                </div>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors print:p-3 print:rounded-lg">
-            <div className="flex items-center gap-3 mb-2 print:gap-2 print:mb-1">
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
+            <div className="flex items-center gap-3 mb-2 print:gap-1 print:mb-1">
               <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0 print:w-8 print:h-8 print:rounded-lg"><BarChart3 size={20} className="print:w-4 print:h-4" /></div>
               <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight print:text-[8px]">ความถนัด<br/>(Aptitude)</p>
             </div>
@@ -360,10 +360,10 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-4 print:mb-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-4 print:rounded-lg">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">การกระจายบุคลิกภาพ (Holland)</h2>
-             <div className="h-64 print:h-40">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">การกระจายบุคลิกภาพ (Holland)</h2>
+             <div className="h-64 print:h-32">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={hollandChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -378,9 +378,9 @@ export default function TeacherDashboard({ onBack }: Props) {
                </ResponsiveContainer>
              </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-4 print:rounded-lg">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">การกระจายความถนัด (Aptitude)</h2>
-             <div className="h-64 print:h-40">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">การกระจายความถนัด (Aptitude)</h2>
+             <div className="h-64 print:h-32">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={aptitudeChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -398,10 +398,10 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* New Trends Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-4 print:mb-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-4 print:rounded-lg">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">กลุ่มอาชีพที่เหมาะสมมากที่สุด 3 อันดับแรก</h2>
-             <div className="flex flex-col gap-4 print:gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-[10px]">กลุ่มอาชีพที่เหมาะสมมากที่สุด 3 อันดับแรก</h2>
+             <div className="flex flex-col gap-4 print:gap-1.5">
                 {topCareers.map((career, idx) => (
                   <div key={idx} className="flex items-start gap-4 print:gap-2">
                     <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 font-bold text-lg print:w-6 print:h-6 print:text-sm print:rounded-md">
@@ -425,9 +425,9 @@ export default function TeacherDashboard({ onBack }: Props) {
              </div>
           </div>
            
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col print:p-4 print:rounded-lg">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
-             <div className="h-64 flex-1 print:h-32">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col print:p-3 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
+             <div className="h-64 flex-1 print:h-24">
                <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
                    <Pie
@@ -463,9 +463,9 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* Room Stats */}
-        <div className="mb-8 print:mb-4">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">ความคืบหน้าแต่ละห้อง</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 print:gap-2">
+        <div className="mb-8 print:mb-2">
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">ความคืบหน้าแต่ละห้อง</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 print:gap-1.5">
             {roomStats.map(stat => (
               <div key={stat.room} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm print:p-2 print:rounded-lg">
                 <div className="flex items-center justify-between mb-2 print:mb-1">
