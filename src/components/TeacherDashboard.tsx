@@ -269,92 +269,90 @@ export default function TeacherDashboard({ onBack }: Props) {
               <Printer size={14} className="shrink-0" />
               <span>พิมพ์ / PDF</span>
             </button>
-            <button onClick={exportToCSV} className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-emerald-200 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
+            <button onClick={exportToCSV} className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-emerald-100 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
               <Download size={14} className="shrink-0" />
               <span>ส่งออก CSV</span>
             </button>
           </div>
-          <div className="hidden md:flex items-center gap-2 bg-indigo-50 px-3 md:px-4 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs md:text-sm shrink-0 print:hidden whitespace-nowrap">
-            <Users size={14} className="shrink-0" />
-            <span>ทั้งหมด: {results.length} คน</span>
+          <div className="hidden md:flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs">
+            <Users size={14} />
+            <span>{results.length} คน</span>
           </div>
         </div>
       </header>
-
-      <div className="max-w-6xl mx-auto px-6 mt-8">
-        
+      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-4 print:px-0">
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors">
-            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0"><Users size={28} /></div>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 print:gap-4 print:mb-4">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-4 print:rounded-lg">
+            <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 print:w-10 print:h-10 print:rounded-lg"><Users size={28} className="print:w-5 print:h-5" /></div>
             <div className="flex-1">
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1 print:text-[10px]">
                 ความคืบหน้า ({filterRoom === 'all' ? 'ทั้งโรงเรียน' : filterRoom})
               </p>
-              <div className="flex items-end gap-3">
-                <p className="text-3xl font-bold text-slate-800">{currentRoomCompleted} <span className="text-lg text-slate-400 font-medium">/ {currentRoomStudents}</span></p>
-                <p className="text-sm font-bold text-indigo-600 mb-1">{roomCompletionPercent}%</p>
+              <div className="flex items-end gap-3 print:gap-2">
+                <p className="text-3xl font-bold text-slate-800 print:text-xl">{currentRoomCompleted} <span className="text-lg text-slate-400 font-medium print:text-sm">/ {currentRoomStudents}</span></p>
+                <p className="text-sm font-bold text-indigo-600 mb-1 print:text-xs print:mb-0">{roomCompletionPercent}%</p>
               </div>
-              <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden">
+              <div className="w-full bg-slate-100 h-1.5 rounded-full mt-2 overflow-hidden print:mt-1">
                 <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${roomCompletionPercent}%` }}></div>
               </div>
             </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors">
-            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0"><BarChart3 size={28} /></div>
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-4 print:rounded-lg">
+            <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center shrink-0 print:w-10 print:h-10 print:rounded-lg"><BarChart3 size={28} className="print:w-5 print:h-5" /></div>
             <div>
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">ความมั่นใจเฉลี่ย</p>
-              <p className="text-3xl font-bold text-slate-800">{avgConsistency}%</p>
+              <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1 print:text-[10px]">ความมั่นใจเฉลี่ย</p>
+              <p className="text-3xl font-bold text-slate-800 print:text-xl">{avgConsistency}%</p>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0"><BarChart3 size={20} /></div>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight">บุคลิกภาพ<br/>(Holland)</p>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors print:p-3 print:rounded-lg">
+            <div className="flex items-center gap-3 mb-2 print:gap-2 print:mb-1">
+              <div className="w-10 h-10 bg-purple-50 text-purple-600 rounded-xl flex items-center justify-center shrink-0 print:w-8 print:h-8 print:rounded-lg"><BarChart3 size={20} className="print:w-4 print:h-4" /></div>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight print:text-[8px]">บุคลิกภาพ<br/>(Holland)</p>
             </div>
             <div className="flex justify-between items-center px-1">
                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 mb-1">มากสุด</p>
-                  <p className="text-xl font-bold text-emerald-600 flex items-baseline justify-center gap-1">
-                    {topHolland} <span className="text-[10px] font-medium text-slate-400">{topHollandPct}%</span>
+                  <p className="text-[10px] text-slate-400 mb-1 print:mb-0 print:text-[8px]">มากสุด</p>
+                  <p className="text-xl font-bold text-emerald-600 flex items-baseline justify-center gap-1 print:text-sm">
+                    {topHolland} <span className="text-[10px] font-medium text-slate-400 print:text-[8px]">{topHollandPct}%</span>
                   </p>
                </div>
                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 mb-1">กลาง</p>
-                  <p className="text-xl font-bold text-amber-500 flex items-baseline justify-center gap-1">
-                    {midHolland} <span className="text-[10px] font-medium text-slate-400">{midHollandPct}%</span>
+                  <p className="text-[10px] text-slate-400 mb-1 print:mb-0 print:text-[8px]">กลาง</p>
+                  <p className="text-xl font-bold text-amber-500 flex items-baseline justify-center gap-1 print:text-sm">
+                    {midHolland} <span className="text-[10px] font-medium text-slate-400 print:text-[8px]">{midHollandPct}%</span>
                   </p>
                </div>
                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 mb-1">น้อยสุด</p>
-                  <p className="text-xl font-bold text-rose-500 flex items-baseline justify-center gap-1">
-                    {bottomHolland} <span className="text-[10px] font-medium text-slate-400">{bottomHollandPct}%</span>
+                  <p className="text-[10px] text-slate-400 mb-1 print:mb-0 print:text-[8px]">น้อยสุด</p>
+                  <p className="text-xl font-bold text-rose-500 flex items-baseline justify-center gap-1 print:text-sm">
+                    {bottomHolland} <span className="text-[10px] font-medium text-slate-400 print:text-[8px]">{bottomHollandPct}%</span>
                   </p>
                </div>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0"><BarChart3 size={20} /></div>
-              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight">ความถนัด<br/>(Aptitude)</p>
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-center hover:border-indigo-100 transition-colors print:p-3 print:rounded-lg">
+            <div className="flex items-center gap-3 mb-2 print:gap-2 print:mb-1">
+              <div className="w-10 h-10 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center shrink-0 print:w-8 print:h-8 print:rounded-lg"><BarChart3 size={20} className="print:w-4 print:h-4" /></div>
+              <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest leading-tight print:text-[8px]">ความถนัด<br/>(Aptitude)</p>
             </div>
             <div className="flex justify-between items-center px-1">
                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 mb-1">มากสุด</p>
-                  <p className="text-xl font-bold text-emerald-600 flex items-baseline justify-center gap-1">
-                    {topAptitude} <span className="text-[10px] font-medium text-slate-400">{topAptitudePct}%</span>
+                  <p className="text-[10px] text-slate-400 mb-1 print:mb-0 print:text-[8px]">มากสุด</p>
+                  <p className="text-xl font-bold text-emerald-600 flex items-baseline justify-center gap-1 print:text-sm">
+                    {topAptitude} <span className="text-[10px] font-medium text-slate-400 print:text-[8px]">{topAptitudePct}%</span>
                   </p>
                </div>
                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 mb-1">กลาง</p>
-                  <p className="text-xl font-bold text-amber-500 flex items-baseline justify-center gap-1">
-                    {midAptitude} <span className="text-[10px] font-medium text-slate-400">{midAptitudePct}%</span>
+                  <p className="text-[10px] text-slate-400 mb-1 print:mb-0 print:text-[8px]">กลาง</p>
+                  <p className="text-xl font-bold text-amber-500 flex items-baseline justify-center gap-1 print:text-sm">
+                    {midAptitude} <span className="text-[10px] font-medium text-slate-400 print:text-[8px]">{midAptitudePct}%</span>
                   </p>
                </div>
                <div className="text-center">
-                  <p className="text-[10px] text-slate-400 mb-1">น้อยสุด</p>
-                  <p className="text-xl font-bold text-rose-500 flex items-baseline justify-center gap-1">
-                    {bottomAptitude} <span className="text-[10px] font-medium text-slate-400">{bottomAptitudePct}%</span>
+                  <p className="text-[10px] text-slate-400 mb-1 print:mb-0 print:text-[8px]">น้อยสุด</p>
+                  <p className="text-xl font-bold text-rose-500 flex items-baseline justify-center gap-1 print:text-sm">
+                    {bottomAptitude} <span className="text-[10px] font-medium text-slate-400 print:text-[8px]">{bottomAptitudePct}%</span>
                   </p>
                </div>
             </div>
@@ -362,15 +360,15 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">การกระจายบุคลิกภาพ (Holland)</h2>
-             <div className="h-64">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-4 print:mb-4">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-4 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">การกระจายบุคลิกภาพ (Holland)</h2>
+             <div className="h-64 print:h-40">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={hollandChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                    <Tooltip 
                      cursor={{fill: '#f1f5f9'}}
                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
@@ -380,14 +378,14 @@ export default function TeacherDashboard({ onBack }: Props) {
                </ResponsiveContainer>
              </div>
           </div>
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">การกระจายความถนัด (Aptitude)</h2>
-             <div className="h-64">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-4 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">การกระจายความถนัด (Aptitude)</h2>
+             <div className="h-64 print:h-40">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={aptitudeChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
+                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
+                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 10}} />
                    <Tooltip 
                      cursor={{fill: '#f1f5f9'}}
                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
@@ -400,36 +398,36 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* New Trends Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">กลุ่มอาชีพที่เหมาะสมมากที่สุด 3 อันดับแรก</h2>
-             <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-4 print:mb-4">
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-4 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">กลุ่มอาชีพที่เหมาะสมมากที่สุด 3 อันดับแรก</h2>
+             <div className="flex flex-col gap-4 print:gap-2">
                 {topCareers.map((career, idx) => (
-                  <div key={idx} className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 font-bold text-lg">
+                  <div key={idx} className="flex items-start gap-4 print:gap-2">
+                    <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center shrink-0 font-bold text-lg print:w-6 print:h-6 print:text-sm print:rounded-md">
                       {idx + 1}
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-sm">{career.title} ({career.type})</h3>
-                      <p className="text-xs text-slate-500 mt-1">{career.careers}...</p>
-                      <div className="flex items-center gap-2 mt-2">
+                      <h3 className="font-bold text-slate-800 text-sm print:text-xs">{career.title} ({career.type})</h3>
+                      <p className="text-xs text-slate-500 mt-1 print:text-[10px] print:mt-0">{career.careers}...</p>
+                      <div className="flex items-center gap-2 mt-2 print:mt-1">
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden max-w-[150px]">
                           <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${career.percentage}%` }}></div>
                         </div>
-                        <span className="text-[10px] font-bold text-slate-400">{career.percentage}%</span>
+                        <span className="text-[10px] font-bold text-slate-400 print:text-[8px]">{career.percentage}%</span>
                       </div>
                     </div>
                   </div>
                 ))}
                 {topCareers.length === 0 && (
-                  <div className="text-center text-slate-400 text-sm py-8">ยังไม่มีข้อมูล</div>
+                  <div className="text-center text-slate-400 text-sm py-8 print:py-2">ยังไม่มีข้อมูล</div>
                 )}
              </div>
           </div>
-          
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
-             <div className="h-64 flex-1">
+           
+          <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col print:p-4 print:rounded-lg">
+             <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
+             <div className="h-64 flex-1 print:h-32">
                <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
                    <Pie
@@ -453,11 +451,11 @@ export default function TeacherDashboard({ onBack }: Props) {
                  </PieChart>
                </ResponsiveContainer>
              </div>
-             <div className="flex justify-center gap-4 mt-2">
+             <div className="flex justify-center gap-4 mt-2 print:gap-2">
                 {confidenceChartData.map((entry, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.fill }}></div>
-                    <span className="text-xs font-medium text-slate-600">{entry.name}</span>
+                  <div key={idx} className="flex items-center gap-2 print:gap-1">
+                    <div className="w-3 h-3 rounded-full print:w-2 print:h-2" style={{ backgroundColor: entry.fill }}></div>
+                    <span className="text-xs font-medium text-slate-600 print:text-[10px]">{entry.name}</span>
                   </div>
                 ))}
              </div>
@@ -465,26 +463,28 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* Room Stats */}
-        <div className="mb-8">
-          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4">ความคืบหน้าแต่ละห้อง</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div className="mb-8 print:mb-4">
+          <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-xs">ความคืบหน้าแต่ละห้อง</h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 print:gap-2">
             {roomStats.map(stat => (
-              <div key={stat.room} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-bold text-slate-700">{stat.room}</span>
-                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{stat.percent}%</span>
+              <div key={stat.room} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm print:p-2 print:rounded-lg">
+                <div className="flex items-center justify-between mb-2 print:mb-1">
+                  <span className="font-bold text-slate-700 print:text-xs">{stat.room}</span>
+                  <span className="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md print:px-1 print:text-[10px]">{stat.percent}%</span>
                 </div>
-                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
+                <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2 print:mb-1">
                   <div className="bg-indigo-500 h-full rounded-full" style={{ width: `${stat.percent}%` }}></div>
                 </div>
-                <p className="text-xs text-slate-500 text-right">{stat.completed} / {stat.total} คน</p>
+                <p className="text-xs text-slate-500 text-right print:text-[10px]">{stat.completed} / {stat.total} คน</p>
               </div>
             ))}
           </div>
         </div>
         
+        <div className="print:break-before-page"></div>
+
         {/* Filters */}
-        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between">
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-6 flex flex-col md:flex-row gap-4 items-center justify-between print:hidden">
           <div className="flex items-center gap-3 w-full md:w-auto">
             <div className="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl border border-slate-100 shrink-0">
               <Filter size={18} className="text-slate-400" />
@@ -520,11 +520,11 @@ export default function TeacherDashboard({ onBack }: Props) {
                 <tr className="border-b border-slate-200">
                   <th className="px-6 py-5">ห้อง / เลขที่</th>
                   <th className="px-6 py-5">ชื่อ - นามสกุล</th>
-                  <th className="px-6 py-5">บุคลิกภาพ (RIASEC)</th>
-                  <th className="px-6 py-5">ความถนัด (D-P-T)</th>
-                  <th className="px-6 py-5">ความมั่นใจ</th>
-                  <th className="px-6 py-5">เวลาที่ทำเสร็จ</th>
-                  <th className="px-6 py-5">จัดการ</th>
+                  <th className="px-6 py-5 print:py-2 print:text-[10px]">บุคลิกภาพ (RIASEC)</th>
+                  <th className="px-6 py-5 print:py-2 print:text-[10px]">ความถนัด (D-P-T)</th>
+                  <th className="px-6 py-5 print:py-2 print:text-[10px]">ความมั่นใจ</th>
+                  <th className="px-6 py-5 print:py-2 print:text-[10px]">เวลาที่ทำเสร็จ</th>
+                  <th className="px-6 py-5 print:hidden">จัดการ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -535,37 +535,37 @@ export default function TeacherDashboard({ onBack }: Props) {
                 ) : (
                   filteredResults.map(r => (
                     <tr key={r.id} onClick={() => setSelectedResult(r)} className="bg-white hover:bg-slate-50 transition-colors cursor-pointer print:break-inside-avoid">
-                      <td className="px-6 py-4 font-bold text-slate-700">
+                      <td className="px-6 py-4 font-bold text-slate-700 print:py-2 print:text-[10px]">
                         {r.student.room} <span className="text-slate-300 mx-1">/</span> {r.student.studentNumber}
                       </td>
-                      <td className="px-6 py-4 font-medium text-slate-800">
+                      <td className="px-6 py-4 font-medium text-slate-800 print:py-2 print:text-[10px]">
                         {r.student.firstName} {r.student.lastName}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-bold px-3 py-1 rounded-lg">
+                      <td className="px-6 py-4 print:py-2">
+                        <span className="bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-bold px-3 py-1 rounded-lg print:text-[10px] print:px-2 print:py-0.5">
                           {getCareerRecommendations(r.part1Score).type}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3 text-xs">
-                          <div className="flex flex-col"><span className="text-slate-400 font-bold text-[10px]">D</span><span className="font-bold text-slate-700">{r.part2Score.D}</span></div>
-                          <div className="flex flex-col"><span className="text-slate-400 font-bold text-[10px]">P</span><span className="font-bold text-slate-700">{r.part2Score.P}</span></div>
-                          <div className="flex flex-col"><span className="text-slate-400 font-bold text-[10px]">T</span><span className="font-bold text-slate-700">{r.part2Score.T}</span></div>
+                      <td className="px-6 py-4 print:py-2">
+                        <div className="flex items-center gap-3 text-xs print:gap-1">
+                          <div className="flex flex-col"><span className="text-slate-400 font-bold text-[10px] print:text-[8px]">D</span><span className="font-bold text-slate-700 print:text-[10px]">{r.part2Score.D}</span></div>
+                          <div className="flex flex-col"><span className="text-slate-400 font-bold text-[10px] print:text-[8px]">P</span><span className="font-bold text-slate-700 print:text-[10px]">{r.part2Score.P}</span></div>
+                          <div className="flex flex-col"><span className="text-slate-400 font-bold text-[10px] print:text-[8px]">T</span><span className="font-bold text-slate-700 print:text-[10px]">{r.part2Score.T}</span></div>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 print:py-2">
                         <span className={cn(
-                          "font-bold px-3 py-1 rounded-lg text-xs",
+                          "font-bold px-3 py-1 rounded-lg text-xs print:text-[10px] print:px-2 print:py-0.5",
                           r.part3ConsistencyPercentage >= 75 ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : 
                           r.part3ConsistencyPercentage >= 26 ? "bg-yellow-50 text-yellow-700 border border-yellow-100" : "bg-red-50 text-red-700 border border-red-100"
                         )}>
                           {r.part3ConsistencyPercentage}%
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-xs font-medium text-slate-400">
+                      <td className="px-6 py-4 text-xs font-medium text-slate-400 print:text-[10px]">
                         {new Date(r.timestamp).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 print:hidden">
                         {deletingId === r.id ? (
                           <div className="flex flex-col gap-1 items-start">
                             <input
