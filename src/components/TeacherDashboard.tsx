@@ -280,9 +280,9 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
         </div>
       </header>
-      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-2 print:px-0">
+      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-2 print:px-0 print:max-w-none">
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 print:gap-2 print:mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8 print:gap-2 print:mb-2 print:grid-cols-4">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
             <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center shrink-0 print:w-10 print:h-10 print:rounded-lg"><Users size={28} className="print:w-5 print:h-5" /></div>
             <div className="flex-1">
@@ -360,10 +360,10 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2 print:grid-cols-2">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">การกระจายบุคลิกภาพ (Holland)</h2>
-             <div className="h-64 print:h-32">
+             <div className="h-64 print:h-40">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={hollandChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -373,14 +373,14 @@ export default function TeacherDashboard({ onBack }: Props) {
                      cursor={{fill: '#f1f5f9'}}
                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                    />
-                   <Bar dataKey="percentage" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" />
+                   <Bar dataKey="percentage" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" isAnimationActive={false} />
                  </BarChart>
                </ResponsiveContainer>
              </div>
           </div>
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">การกระจายความถนัด (Aptitude)</h2>
-             <div className="h-64 print:h-32">
+             <div className="h-64 print:h-40">
                <ResponsiveContainer width="100%" height="100%">
                  <BarChart data={aptitudeChartData}>
                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -390,7 +390,7 @@ export default function TeacherDashboard({ onBack }: Props) {
                      cursor={{fill: '#f1f5f9'}}
                      contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
                    />
-                   <Bar dataKey="percentage" fill="#f59e0b" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" />
+                   <Bar dataKey="percentage" fill="#f59e0b" radius={[4, 4, 0, 0]} name="เปอร์เซ็นต์ (%)" isAnimationActive={false} />
                  </BarChart>
                </ResponsiveContainer>
              </div>
@@ -398,7 +398,7 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
 
         {/* New Trends Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 print:gap-2 print:mb-2 print:grid-cols-2">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-2 print:text-[10px]">กลุ่มอาชีพที่เหมาะสมมากที่สุด 3 อันดับแรก</h2>
              <div className="flex flex-col gap-4 print:gap-1.5">
@@ -427,10 +427,11 @@ export default function TeacherDashboard({ onBack }: Props) {
            
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col print:p-3 print:rounded-lg">
              <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">ระดับความมั่นใจในการตัดสินใจ (ส่วนที่ 3)</h2>
-             <div className="h-64 flex-1 print:h-24">
+             <div className="h-64 flex-1 print:h-40">
                <ResponsiveContainer width="100%" height="100%">
                  <PieChart>
                    <Pie
+                     isAnimationActive={false}
                      data={confidenceChartData}
                      cx="50%"
                      cy="50%"
@@ -465,7 +466,7 @@ export default function TeacherDashboard({ onBack }: Props) {
         {/* Room Stats */}
         <div className="mb-8 print:mb-2">
           <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest mb-4 print:mb-1 print:text-[10px]">ความคืบหน้าแต่ละห้อง</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 print:gap-1.5">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 print:gap-1.5 print:grid-cols-4">
             {roomStats.map(stat => (
               <div key={stat.room} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm print:p-2 print:rounded-lg">
                 <div className="flex items-center justify-between mb-2 print:mb-1">
