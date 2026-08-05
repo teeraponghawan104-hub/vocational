@@ -14,9 +14,9 @@ export const acquireLock = async (studentId: string, sessionId: string): Promise
     if (lockSnap.exists()) {
       const data = lockSnap.data();
       if (data.is_locked) {
-        // Check timeout (15 mins = 15 * 60 * 1000)
+        // Check timeout (15 seconds = 15 * 1000)
         const lockedAt = data.locked_at || 0;
-        if (now - lockedAt < 15 * 60 * 1000 && data.locked_by !== sessionId) {
+        if (now - lockedAt < 15 * 1000 && data.locked_by !== sessionId) {
           return false; // Locked by someone else and not expired
         }
       }
@@ -30,9 +30,22 @@ export const acquireLock = async (studentId: string, sessionId: string): Promise
     return true;
   } catch (err) {
     console.error("Error acquiring lock:", err);
-    // If network fails, we might just allow or block. Let's allow fallback or block.
-    // Better to block or show error, but we'll return false if completely failed.
-    return false;
+    // If network fails, we allow them to proceed so they aren't permanently locked out
+    return true;
+  }
+};
+
+export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    const lockSnap = await getDoc(lockRef);
+    if (lockSnap.exists() && lockSnap.data().locked_by === sessionId) {
+      await updateDoc(lockRef, {
+        locked_at: Date.now()
+      });
+    }
+  } catch (err) {
+    console.error("Error renewing lock:", err);
   }
 };
 

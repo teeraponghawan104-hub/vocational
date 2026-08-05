@@ -3,7 +3,7 @@ import { StudentInfo, AssessmentResult, Part1Answer, Part2Answer } from '../type
 import Part1 from './Part1';
 import Part2 from './Part2';
 import Part3 from './Part3';
-import { saveAssessment, acquireLock, releaseLock } from '../db';
+import { saveAssessment, acquireLock, releaseLock, renewLock } from '../db';
 import { LogOut } from 'lucide-react';
 
 interface Props {
@@ -20,15 +20,26 @@ export default function AssessmentLockdown({ student, onComplete, onCancel }: Pr
   
   useEffect(() => {
     if (!sessionIdRef.current) {
-      sessionIdRef.current = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      let storedSession = sessionStorage.getItem('app_session_id');
+      if (!storedSession) {
+        storedSession = Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+        sessionStorage.setItem('app_session_id', storedSession);
+      }
+      sessionIdRef.current = storedSession;
     }
     const studentId = `${student.room}-${student.studentNumber}`;
     let isMounted = true;
+    let heartbeatInterval: NodeJS.Timeout;
 
     const checkLock = async () => {
       const success = await acquireLock(studentId, sessionIdRef.current);
       if (isMounted) {
         setLockStatus(success ? 'acquired' : 'denied');
+        if (success) {
+          heartbeatInterval = setInterval(() => {
+            renewLock(studentId, sessionIdRef.current);
+          }, 5000); // Renew every 5 seconds
+        }
       }
     };
     checkLock();
@@ -40,6 +51,7 @@ export default function AssessmentLockdown({ student, onComplete, onCancel }: Pr
 
     return () => {
       isMounted = false;
+      if (heartbeatInterval) clearInterval(heartbeatInterval);
       releaseLock(studentId, sessionIdRef.current);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
