@@ -204,42 +204,42 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto p-4 md:p-8 w-full animate-in fade-in duration-500 pb-20">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+      <div className="max-w-5xl mx-auto p-4 md:p-8 w-full animate-in fade-in duration-500 pb-20 print:p-0 print:m-0 print:max-w-none">
+        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden print:rounded-none print:border-none print:shadow-none">
           
           {/* Header */}
-          <div className="border-b border-slate-100 p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl sm:text-2xl uppercase border-4 border-white shadow-sm shrink-0">
+          <div className="border-b border-slate-100 p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 print:p-4 print:pb-2 print:flex-row print:items-center print:gap-4">
+            <div className="flex items-center gap-4 sm:gap-6 print:gap-3">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl sm:text-2xl uppercase border-4 border-white shadow-sm shrink-0 print:w-10 print:h-10 print:text-lg">
                 {student.firstName.charAt(0)}{student.lastName.charAt(0)}
               </div>
               <div>
-                <div className="text-[10px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1">ผลการประเมินความพร้อมทางอาชีพ</div>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800">{student.firstName} {student.lastName}</h1>
-                <p className="text-slate-500 font-medium text-xs sm:text-sm md:text-base mt-1">ชั้น {student.room} • เลขที่ {student.studentNumber}</p>
+                <div className="text-[10px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 print:text-[8px] print:mb-0">ผลการประเมินความพร้อมทางอาชีพ</div>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 print:text-lg">{student.firstName} {student.lastName}</h1>
+                <p className="text-slate-500 font-medium text-xs sm:text-sm md:text-base mt-1 print:text-[10px] print:mt-0">ชั้น {student.room} • เลขที่ {student.studentNumber}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 w-full md:w-auto justify-between md:justify-start">
+            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 w-full md:w-auto justify-between md:justify-start print:px-3 print:py-2 print:rounded-lg">
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 text-left md:text-right">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
-                <div className="text-xl sm:text-2xl font-black text-slate-800 text-left md:text-right">{part3ConsistencyPercentage}%</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 text-left md:text-right print:text-[8px] print:mb-0">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
+                <div className="text-xl sm:text-2xl font-black text-slate-800 text-left md:text-right print:text-lg">{part3ConsistencyPercentage}%</div>
               </div>
-              <div className={cn("px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center shrink-0", confidence.bg, confidence.color)}>
+              <div className={cn("px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center shrink-0 print:px-2 print:py-1 print:text-[8px]", confidence.bg, confidence.color)}>
                 ระดับ{confidence.text}
               </div>
             </div>
           </div>
 
-          <div className="p-5 sm:p-8 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
+          <div className="p-5 sm:p-8 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10 print:p-2 print:grid-cols-2 print:gap-2">
             
             {/* Part 1: RIASEC */}
-            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid">
-              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">1</div>
+            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-lg print:border-slate-200">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 print:mb-2 print:text-sm">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm print:w-6 print:h-6 print:text-xs">1</div>
                 สรุปความสนใจด้านอาชีพ (RIASEC)
               </h3>
-              <div className="h-[300px] mb-6">
+              <div className="h-[300px] mb-6 print:h-[180px] print:mb-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="55%" data={riasecData}>
                     <PolarGrid stroke="#e2e8f0" />
@@ -249,23 +249,23 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mt-auto">
+              <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mt-auto print:gap-1 print:text-[10px]">
                 {riasecData.map(d => (
-                  <div key={d.subject} className="flex justify-between items-center bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-sm border border-slate-100">
+                  <div key={d.subject} className="flex justify-between items-center bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-sm border border-slate-100 print:px-2 print:py-1 print:rounded-md">
                     <span className="font-medium text-slate-600 truncate mr-2">{d.label.split(' ')[0]}</span>
-                    <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md">{d.score}</span>
+                    <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md print:bg-transparent print:px-0 print:py-0">{d.score}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Part 2: D-P-T */}
-            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid">
-              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">2</div>
+            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-lg print:border-slate-200">
+              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 print:mb-2 print:text-sm">
+                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm print:w-6 print:h-6 print:text-xs">2</div>
                 สรุปความถนัดทางอาชีพ (D-P-T)
               </h3>
-              <div className="h-64 mt-4 mb-6">
+              <div className="h-64 mt-4 mb-6 print:h-[150px] print:mt-1 print:mb-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={dptData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
@@ -277,12 +277,12 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
                 </ResponsiveContainer>
               </div>
               
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mt-auto">
-                <div className="text-sm font-bold text-indigo-600 mb-2">ความถนัดที่โดดเด่นที่สุด: {dominantDpt.title}</div>
-                <p className="text-sm text-slate-600 leading-relaxed">
+              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mt-auto print:p-2 print:rounded-lg print:border-slate-200">
+                <div className="text-sm font-bold text-indigo-600 mb-2 print:mb-1 print:text-xs">ความถนัดที่โดดเด่นที่สุด: {dominantDpt.title}</div>
+                <p className="text-sm text-slate-600 leading-relaxed print:text-[10px] print:leading-normal">
                   {dominantDpt.desc}
                 </p>
-                <div className="mt-3 text-sm">
+                <div className="mt-3 text-sm print:mt-1 print:text-[10px]">
                   <span className="font-bold text-slate-700">อาชีพที่สอดคล้อง: </span>
                   <span className="text-slate-600">{dominantDpt.careers}</span>
                 </div>
@@ -290,57 +290,57 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Detailed Interpretation */}
-            <div className="lg:col-span-2 space-y-6 sm:space-y-8 print:break-inside-avoid">
-              <div className="bg-indigo-600 p-1 rounded-2xl md:rounded-3xl shadow-lg">
-                <div className="bg-white rounded-[14px] md:rounded-[22px] p-5 sm:p-8 md:p-10">
-                  <div className="flex items-center gap-3 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100">
-                    <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-xl shrink-0">
-                      <User size={24} strokeWidth={2} />
+            <div className="lg:col-span-2 space-y-6 sm:space-y-8 print:break-inside-avoid print:space-y-2 print:col-span-2 print:mt-0">
+              <div className="bg-indigo-600 p-1 rounded-2xl md:rounded-3xl shadow-lg print:bg-transparent print:p-0 print:shadow-none">
+                <div className="bg-white rounded-[14px] md:rounded-[22px] p-5 sm:p-8 md:p-10 print:rounded-lg print:border print:border-slate-200 print:p-3">
+                  <div className="flex items-center gap-3 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100 print:mb-2 print:pb-2 print:gap-2">
+                    <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-xl shrink-0 print:p-1.5 print:rounded-md">
+                      <User size={24} strokeWidth={2} className="print:w-5 print:h-5" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-800">การแปลผลบุคลิกภาพ</h2>
-                      <p className="text-slate-500">วิเคราะห์จากความสนใจด้านอาชีพ (RIASEC)</p>
+                      <h2 className="text-2xl font-bold text-slate-800 print:text-base">การแปลผลบุคลิกภาพ</h2>
+                      <p className="text-slate-500 print:text-xs">วิเคราะห์จากความสนใจด้านอาชีพ (RIASEC)</p>
                     </div>
                   </div>
                   
-                  <div className="mb-6">
-                    <h3 className="text-xl font-bold text-indigo-700 mb-2">{dominantRiasec.title}</h3>
+                  <div className="mb-6 print:mb-2">
+                    <h3 className="text-xl font-bold text-indigo-700 mb-2 print:text-sm print:mb-1">{dominantRiasec.title}</h3>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4">
+                    <div className="space-y-6 print:space-y-2">
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                          <BookOpen size={18} className="text-indigo-500" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
+                          <BookOpen size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
                           ลักษณะโดยทั่วไป
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm">{dominantRiasec.general}</p>
+                        <p className="text-slate-600 leading-relaxed text-sm print:text-[10px] print:leading-normal">{dominantRiasec.general}</p>
                       </div>
                       
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                          <CheckCircle2 size={18} className="text-indigo-500" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
+                          <CheckCircle2 size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
                           ลักษณะเด่นของบุคลิกภาพ
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">{dominantRiasec.distinctive}</p>
+                        <p className="text-slate-600 leading-relaxed text-sm bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 print:p-2 print:rounded-lg print:text-[10px] print:leading-normal print:bg-transparent print:border-slate-200">{dominantRiasec.distinctive}</p>
                       </div>
                     </div>
                     
-                    <div className="space-y-6">
+                    <div className="space-y-6 print:space-y-2">
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                          <Briefcase size={18} className="text-indigo-500" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
+                          <Briefcase size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
                           อาชีพที่สอดคล้องกับบุคลิกภาพ
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm">{dominantRiasec.careers}</p>
+                        <p className="text-slate-600 leading-relaxed text-sm print:text-[10px] print:leading-normal">{dominantRiasec.careers}</p>
                       </div>
                       
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-                          <GraduationCap size={18} className="text-indigo-500" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
+                          <GraduationCap size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
                           สาขาวิชาที่อาจเลือกศึกษา
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm">{dominantRiasec.majors}</p>
+                        <p className="text-slate-600 leading-relaxed text-sm print:text-[10px] print:leading-normal">{dominantRiasec.majors}</p>
                       </div>
                     </div>
                   </div>
