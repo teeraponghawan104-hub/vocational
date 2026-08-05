@@ -5,6 +5,30 @@ import { collection, addDoc, getDocs, deleteDoc, doc, onSnapshot, getDoc, setDoc
 const COLLECTION_NAME = 'assessments';
 const LOCKS_COLLECTION = 'student_locks';
 
+export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
+  return onSnapshot(
+    collection(db, LOCKS_COLLECTION),
+    (querySnapshot) => {
+      const lockedIds: string[] = [];
+      const now = Date.now();
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        if (data.is_locked) {
+          const lockedAt = data.locked_at || 0;
+          if (now - lockedAt < 15 * 1000) {
+            lockedIds.push(doc.id); // doc.id is studentId (e.g. "room-number")
+          }
+        }
+      });
+      callback(lockedIds);
+    },
+    (err) => {
+      console.error("Failed to listen for locks:", err);
+      callback([]);
+    }
+  );
+};
+
 export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
   try {
     const lockRef = doc(db, LOCKS_COLLECTION, studentId);

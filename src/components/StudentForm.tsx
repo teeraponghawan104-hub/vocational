@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { StudentInfo, AssessmentResult } from '../types';
 import { rooms, students } from '../studentData';
-import { subscribeToAssessments } from '../db';
+import { subscribeToAssessments, subscribeToLocks } from '../db';
 
 interface Props {
   onSubmit: (info: StudentInfo) => void;
@@ -11,9 +11,10 @@ export default function StudentForm({ onSubmit }: Props) {
   const [room, setRoom] = useState<string>('');
   const [selectedStudentId, setSelectedStudentId] = useState<string>('');
   const [completedStudentIds, setCompletedStudentIds] = useState<Set<string>>(new Set());
+  const [lockedStudentIds, setLockedStudentIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const unsubscribe = subscribeToAssessments((results) => {
+    const unsubscribeAssessments = subscribeToAssessments((results) => {
       const ids = new Set<string>();
       results.forEach(r => {
         // Find student ID by matching room and number
@@ -25,7 +26,14 @@ export default function StudentForm({ onSubmit }: Props) {
       setCompletedStudentIds(ids);
     });
 
-    return () => unsubscribe();
+    const unsubscribeLocks = subscribeToLocks((lockedIds) => {
+      setLockedStudentIds(new Set(lockedIds));
+    });
+
+    return () => {
+      unsubscribeAssessments();
+      unsubscribeLocks();
+    };
   }, []);
 
   const filteredStudents = useMemo(() => {
@@ -47,6 +55,12 @@ export default function StudentForm({ onSubmit }: Props) {
     
     const student = students.find(s => s.studentId === selectedStudentId);
     if (!student) return;
+
+    const lockId = `${student.room}-${student.number}`;
+    if (lockedStudentIds.has(lockId)) {
+      alert('ไม่สามารถเข้าถึงได้ เนื่องจากมีคนกำลังทำข้อมูลนี้อยู่');
+      return;
+    }
 
     // Split name into first and last
     const nameParts = student.name.split(/\s+/);
@@ -108,9 +122,16 @@ export default function StudentForm({ onSubmit }: Props) {
           <option value="" disabled>{room ? "เลือกชื่อ..." : "กรุณาเลือกชั้นเรียนก่อน"}</option>
           {filteredStudents.map(s => {
             const isCompleted = completedStudentIds.has(s.studentId);
+            const lockId = `${s.room}-${s.number}`;
+            const isLocked = lockedStudentIds.has(lockId);
+            
+            let label = `เลขที่ ${s.number} - ${s.name}`;
+            if (isCompleted) label += ' (ทำแบบทดสอบแล้ว)';
+            else if (isLocked) label += ' (กำลังมีคนทำข้อมูลนี้อยู่)';
+            
             return (
-              <option key={s.studentId} value={s.studentId} disabled={isCompleted}>
-                เลขที่ {s.number} - {s.name} {isCompleted ? '(ทำแบบทดสอบแล้ว)' : ''}
+              <option key={s.studentId} value={s.studentId} disabled={isCompleted || isLocked}>
+                {label}
               </option>
             );
           })}
