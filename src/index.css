@@ -9,3 +9,26 @@
     scrollbar-width: none;
   }
 }
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm;
+  }
+  body {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    background-color: white !important;
+  }
+  /* Force charts to render correctly in print */
+  .recharts-wrapper {
+    max-width: 100% !important;
+  }
+}
+
+@media print {
+  .print\:break-inside-avoid {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

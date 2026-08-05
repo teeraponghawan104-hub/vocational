@@ -23,6 +23,7 @@ export default function TeacherDashboard({ onBack }: Props) {
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletePassword, setDeletePassword] = useState('');
+  const [showPrintWarning, setShowPrintWarning] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -71,68 +72,15 @@ export default function TeacherDashboard({ onBack }: Props) {
   };
 
   
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById('pdf-teacher-content');
-    if (!element) return;
-    
-    // Save original styles
-    const originalHeight = element.style.height;
-    const originalOverflow = element.style.overflow;
-    const originalWidth = element.style.width;
-    const originalMaxWidth = element.style.maxWidth;
-    
-    // Force a specific wide width for PDF generation to ensure it looks good (desktop view)
-    element.style.height = 'auto';
-    element.style.overflow = 'visible';
-    element.style.width = '1200px';
-    element.style.maxWidth = '1200px';
-    
-    // We need a small delay to let the browser re-render the layout
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+  const handleDownloadPdf = () => {
     try {
-      const dataUrl = await toPng(element, { 
-        quality: 1, 
-        backgroundColor: '#F8FAFC', // slate-50
-        pixelRatio: 2,
-        width: 1200,
-        height: element.scrollHeight,
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left',
-          width: '1200px'
-        },
-        filter: (node: any) => {
-          if (node.hasAttribute && node.hasAttribute('data-hide-print')) {
-            return false;
-          }
-          if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) {
-            return false;
-          }
-          return true;
-        }
-      });
-      
-      const tempPdf = new jsPDF();
-      const imgProps = tempPdf.getImageProperties(dataUrl);
-      
-      const pdf = new jsPDF({
-        orientation: imgProps.width > imgProps.height ? 'l' : 'p',
-        unit: 'px',
-        format: [imgProps.width, imgProps.height]
-      });
-      
-      pdf.addImage(dataUrl, 'PNG', 0, 0, imgProps.width, imgProps.height);
-      
-      pdf.save(`รายงานสรุป_${Date.now()}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF', err);
-      alert('เกิดข้อผิดพลาดในการสร้าง PDF');
-    } finally {
-      element.style.height = originalHeight;
-      element.style.overflow = originalOverflow;
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
+      if (window.self !== window.top) {
+        setShowPrintWarning(true);
+      } else {
+        setTimeout(() => window.print(), 100);
+      }
+    } catch (e) {
+      setShowPrintWarning(true);
     }
   };
 
@@ -268,6 +216,36 @@ export default function TeacherDashboard({ onBack }: Props) {
 
   return (
     <div className="min-h-screen print:h-auto print:bg-white bg-slate-50 text-slate-900 pb-12 animate-in fade-in duration-300 font-sans" id="pdf-teacher-content">
+      {/* Print Warning Modal */}
+      {showPrintWarning && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden" style={{ zIndex: 9999 }}>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">โหมดพรีวิว</h3>
+            <p className="text-slate-600 mb-6 text-sm md:text-base leading-relaxed">
+              คุณกำลังใช้งานในโหมดพรีวิว ฟังก์ชันพิมพ์รายงานและบันทึกเป็น PDF จะทำงานได้ดีที่สุดเมื่อเปิดแอปในหน้าต่างใหม่
+              <br/><br/>
+              กรุณาคลิกปุ่ม <b className="text-slate-800">"Open in New Tab"</b> (ไอคอนลูกศร ↗️ ที่มุมขวาบนของหน้าจอพรีวิวนี้) เพื่อเปิดแอปแบบเต็มจอแล้วกดพิมพ์อีกครั้ง
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => {
+                  setShowPrintWarning(false);
+                  setTimeout(() => window.print(), 100);
+                }}
+                className="px-4 py-2 text-slate-500 font-medium hover:bg-slate-100 rounded-lg transition-colors text-sm"
+              >
+                พิมพ์ในหน้านี้
+              </button>
+              <button 
+                onClick={() => setShowPrintWarning(false)}
+                className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors shadow-sm text-sm"
+              >
+                เข้าใจแล้ว
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="h-auto md:h-16 py-3 md:py-0 bg-white border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden gap-3 md:gap-0" data-hide-print="true">
         <div className="flex items-center gap-2 md:gap-4 justify-between md:justify-start w-full md:w-auto">
           <div className="flex items-center gap-2">
@@ -556,7 +534,7 @@ export default function TeacherDashboard({ onBack }: Props) {
                   <tr><td colSpan={7} className="px-6 py-10 text-center text-slate-500 font-medium">ไม่พบข้อมูล</td></tr>
                 ) : (
                   filteredResults.map(r => (
-                    <tr key={r.id} onClick={() => setSelectedResult(r)} className="bg-white hover:bg-slate-50 transition-colors cursor-pointer">
+                    <tr key={r.id} onClick={() => setSelectedResult(r)} className="bg-white hover:bg-slate-50 transition-colors cursor-pointer print:break-inside-avoid">
                       <td className="px-6 py-4 font-bold text-slate-700">
                         {r.student.room} <span className="text-slate-300 mx-1">/</span> {r.student.studentNumber}
                       </td>

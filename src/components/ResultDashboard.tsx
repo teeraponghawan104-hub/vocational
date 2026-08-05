@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AssessmentResult } from '../types';
 import { getCareerRecommendations, riasecInterpretations, dptInterpretations } from '../data';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
@@ -30,6 +30,7 @@ const DPT_LABELS: Record<string, string> = {
 
 export default function ResultDashboard({ result, onRestart, isTeacherView }: Props) {
   const { student, part1Score, part2Score, part3ConsistencyPercentage } = result;
+  const [showPrintWarning, setShowPrintWarning] = useState(false);
 
   const riasecData = Object.entries(part1Score).map(([key, value]) => ({
     subject: key,
@@ -60,79 +61,15 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
   const highestDptKey = sortedDpt[0][0];
   const dominantDpt = dptInterpretations[highestDptKey];
 
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById('pdf-content');
-    if (!element) return;
-    
-    // Save original styles
-    const originalHeight = element.style.height;
-    const originalOverflow = element.style.overflow;
-    const originalWidth = element.style.width;
-    const originalMaxWidth = element.style.maxWidth;
-    
-    // Force a specific wide width for PDF generation to ensure it looks good (desktop view)
-    element.style.height = 'auto';
-    element.style.overflow = 'visible';
-    element.style.width = '1000px';
-    element.style.maxWidth = '1000px';
-    
-    // We need a small delay to let the browser re-render the layout
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
+  const handleDownloadPdf = () => {
     try {
-      const dataUrl = await toPng(element, { 
-        quality: 1, 
-        backgroundColor: '#FDFDFF',
-        pixelRatio: 2,
-        width: 1000,
-        height: element.scrollHeight,
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left',
-          width: '1000px'
-        },
-        filter: (node: any) => {
-          if (node.hasAttribute && node.hasAttribute('data-hide-print')) {
-            return false;
-          }
-          if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) {
-            return false;
-          }
-          return true;
-        }
-      });
-      
-      const tempPdf = new jsPDF();
-      const imgProps = tempPdf.getImageProperties(dataUrl);
-      
-      const pdfWidth = 210; // A4 width in mm
-      const pageHeight = 297; // A4 height in mm
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
-      let position = 0;
-      let heightLeft = pdfHeight;
-      
-      pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-      heightLeft -= pageHeight;
-      
-      while (heightLeft > 0) {
-        position -= pageHeight;
-        pdf.addPage();
-        pdf.addImage(dataUrl, 'PNG', 0, position, pdfWidth, pdfHeight);
-        heightLeft -= pageHeight;
+      if (window.self !== window.top) {
+        setShowPrintWarning(true);
+      } else {
+        setTimeout(() => window.print(), 100);
       }
-      
-      pdf.save(`ผลการทดสอบ_${student.firstName}_${student.lastName}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF', err);
-      alert('เกิดข้อผิดพลาดในการสร้าง PDF');
-    } finally {
-      element.style.height = originalHeight;
-      element.style.overflow = originalOverflow;
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
+    } catch (e) {
+      setShowPrintWarning(true);
     }
   };
 
@@ -192,6 +129,36 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
 
   return (
     <div className="flex flex-col h-screen print:h-auto print:overflow-visible w-full bg-[#FDFDFF] text-slate-900 overflow-y-auto font-sans" id="pdf-content">
+      {/* Print Warning Modal */}
+      {showPrintWarning && (
+        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden" style={{ zIndex: 9999 }}>
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-xl font-bold text-slate-900 mb-2">โหมดพรีวิว</h3>
+            <p className="text-slate-600 mb-6 text-sm md:text-base leading-relaxed">
+              คุณกำลังใช้งานในโหมดพรีวิว ฟังก์ชันพิมพ์รายงานและบันทึกเป็น PDF จะทำงานได้ดีที่สุดเมื่อเปิดแอปในหน้าต่างใหม่
+              <br/><br/>
+              กรุณาคลิกปุ่ม <b className="text-slate-800">"Open in New Tab"</b> (ไอคอนลูกศร ↗️ ที่มุมขวาบนของหน้าจอพรีวิวนี้) เพื่อเปิดแอปแบบเต็มจอแล้วกดพิมพ์อีกครั้ง
+            </p>
+            <div className="flex justify-end gap-3">
+              <button 
+                onClick={() => {
+                  setShowPrintWarning(false);
+                  setTimeout(() => window.print(), 100);
+                }}
+                className="px-4 py-2 text-slate-500 font-medium hover:bg-slate-100 rounded-lg transition-colors text-sm"
+              >
+                พิมพ์ในหน้านี้
+              </button>
+              <button 
+                onClick={() => setShowPrintWarning(false)}
+                className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors shadow-sm text-sm"
+              >
+                เข้าใจแล้ว
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
         <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 pr-2">
           <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
@@ -267,7 +234,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
           <div className="p-5 sm:p-8 md:p-10 grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
             
             {/* Part 1: RIASEC */}
-            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">1</div>
                 สรุปความสนใจด้านอาชีพ (RIASEC)
@@ -293,7 +260,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Part 2: D-P-T */}
-            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid">
               <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm">2</div>
                 สรุปความถนัดทางอาชีพ (D-P-T)
@@ -323,7 +290,7 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Detailed Interpretation */}
-            <div className="lg:col-span-2 space-y-6 sm:space-y-8">
+            <div className="lg:col-span-2 space-y-6 sm:space-y-8 print:break-inside-avoid">
               <div className="bg-indigo-600 p-1 rounded-2xl md:rounded-3xl shadow-lg">
                 <div className="bg-white rounded-[14px] md:rounded-[22px] p-5 sm:p-8 md:p-10">
                   <div className="flex items-center gap-3 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100">
