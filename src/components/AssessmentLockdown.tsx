@@ -28,7 +28,7 @@ export default function AssessmentLockdown({ student, onComplete, onCancel, onLo
       }
       sessionIdRef.current = storedSession;
     }
-    const studentId = `${student.room}-${student.studentNumber}`;
+    const studentId = `${student.room}-${student.studentNumber}`.replace(/\//g, '_');
     let isMounted = true;
     let heartbeatInterval: NodeJS.Timeout;
 
@@ -62,7 +62,7 @@ export default function AssessmentLockdown({ student, onComplete, onCancel, onLo
 
   const handleCancel = async () => {
     if (lockStatus === 'acquired') {
-      const studentId = `${student.room}-${student.studentNumber}`;
+      const studentId = `${student.room}-${student.studentNumber}`.replace(/\//g, '_');
       await releaseLock(studentId, sessionIdRef.current);
     }
     onCancel();
@@ -157,7 +157,7 @@ export default function AssessmentLockdown({ student, onComplete, onCancel, onLo
       await saveAssessment(result);
       localStorage.removeItem(autosaveKey);
       if (lockStatus === 'acquired') {
-        const studentId = `${student.room}-${student.studentNumber}`;
+        const studentId = `${student.room}-${student.studentNumber}`.replace(/\//g, '_');
         await releaseLock(studentId, sessionIdRef.current);
       }
       onComplete(result);

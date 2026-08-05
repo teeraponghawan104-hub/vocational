@@ -56,7 +56,7 @@ export default function StudentForm({ onSubmit }: Props) {
     const student = students.find(s => s.studentId === selectedStudentId);
     if (!student) return;
 
-    const lockId = `${student.room}-${student.number}`;
+    const lockId = `${student.room}-${student.number}`.replace(/\//g, '_');
     if (lockedStudentIds.has(lockId)) {
       alert('ไม่สามารถเข้าถึงได้ เนื่องจากมีคนกำลังทำข้อมูลนี้อยู่');
       return;
@@ -122,7 +122,7 @@ export default function StudentForm({ onSubmit }: Props) {
           <option value="" disabled>{room ? "เลือกชื่อ..." : "กรุณาเลือกชั้นเรียนก่อน"}</option>
           {filteredStudents.map(s => {
             const isCompleted = completedStudentIds.has(s.studentId);
-            const lockId = `${s.room}-${s.number}`;
+            const lockId = `${s.room}-${s.number}`.replace(/\//g, '_');
             const isLocked = lockedStudentIds.has(lockId);
             
             let label = `เลขที่ ${s.number} - ${s.name}`;
