@@ -10,9 +10,10 @@ interface Props {
   student: StudentInfo;
   onComplete: (result: AssessmentResult) => void;
   onCancel: () => void;
+  onLockedOut?: () => void;
 }
 
-export default function AssessmentLockdown({ student, onComplete, onCancel }: Props) {
+export default function AssessmentLockdown({ student, onComplete, onCancel, onLockedOut }: Props) {
   const autosaveKey = `autosave-${student.room}-${student.studentNumber}`;
 
   const sessionIdRef = useRef<string>('');
@@ -39,6 +40,8 @@ export default function AssessmentLockdown({ student, onComplete, onCancel }: Pr
           heartbeatInterval = setInterval(() => {
             renewLock(studentId, sessionIdRef.current);
           }, 5000); // Renew every 5 seconds
+        } else {
+          if (onLockedOut) onLockedOut();
         }
       }
     };
@@ -189,29 +192,6 @@ export default function AssessmentLockdown({ student, onComplete, onCancel }: Pr
           <div className="bg-white rounded-2xl p-6 shadow-xl flex items-center gap-4">
             <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
             <span className="text-slate-700 font-medium text-sm">กำลังตรวจสอบสิทธิ์การเข้าใช้งาน...</span>
-          </div>
-        </div>
-      )}
-
-      {/* Lock Denied Modal */}
-      {lockStatus === 'denied' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-[9999] p-4">
-          <div className="bg-white rounded-2xl p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mb-6 shadow-sm border border-rose-200">
-              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold text-slate-800 mb-3">เข้าใช้งานไม่ได้</h3>
-            <p className="text-slate-600 text-sm leading-relaxed mb-8">
-              ไม่สามารถเข้าใช้งานได้ เนื่องจากมีผู้ใช้งานท่านอื่นกำลังทำแบบทดสอบในชื่อนี้อยู่
-            </p>
-            <button
-              onClick={onCancel}
-              className="w-full bg-slate-800 hover:bg-slate-900 text-white font-semibold py-3 rounded-xl transition-colors shadow-md"
-            >
-              กลับไปเลือกชื่อใหม่
-            </button>
           </div>
         </div>
       )}
