@@ -2,6 +2,7 @@ import { AssessmentResult } from './types';
 import { normalizeName } from './studentData';
 
 const CACHE_KEY = 'voca_assess_cache';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const syncOfflineData = async () => {
   try {
@@ -13,7 +14,7 @@ export const syncOfflineData = async () => {
     let remaining: AssessmentResult[] = [];
     for (const result of cached) {
       try {
-        const res = await fetch('/api/assessments', {
+        const res = await fetch(API_BASE_URL + '/api/assessments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(result)
@@ -53,7 +54,7 @@ export const saveAssessment = async (result: AssessmentResult): Promise<void> =>
   // Try sending to server with up to 3 attempts
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      const res = await fetch('/api/assessments', {
+      const res = await fetch(API_BASE_URL + '/api/assessments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(result)
@@ -87,7 +88,7 @@ export const saveAssessment = async (result: AssessmentResult): Promise<void> =>
 
 export const getAssessments = async (): Promise<AssessmentResult[]> => {
   try {
-    const res = await fetch('/api/assessments?t=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch(API_BASE_URL + '/api/assessments?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch');
     const remoteAssessments: AssessmentResult[] = await res.json();
     return remoteAssessments;
@@ -108,7 +109,7 @@ export const subscribeToAssessments = (callback: (assessments: AssessmentResult[
   
   const fetchAndCallback = async () => {
     try {
-      const res = await fetch('/api/assessments?t=' + Date.now(), { cache: 'no-store' });
+      const res = await fetch(API_BASE_URL + '/api/assessments?t=' + Date.now(), { cache: 'no-store' });
       if (res.ok && isMounted) {
         const remoteAssessments: AssessmentResult[] = await res.json();
         callback(remoteAssessments);

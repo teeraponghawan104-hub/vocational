@@ -1,5 +1,6 @@
 import express from "express";
 import path from "path";
+import cors from "cors";
 import { createServer as createViteServer } from "vite";
 import { drizzle } from 'drizzle-orm/node-postgres';
 import pkg from 'pg';
@@ -12,6 +13,7 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
   
+  app.use(cors());
   app.use(express.json());
 
   const pool = new Pool({
