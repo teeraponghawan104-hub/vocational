@@ -1,106 +1,93 @@
 import { AssessmentResult } from './types';
 import { normalizeName } from './studentData';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-
-// Create Supabase client
-export const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
+import { firestore } from './firebase';
+import { collection, doc, setDoc, getDocs, getDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
 
 export const syncOfflineData = async () => {
-  // Cloud native sync handle
+  // Firebase handles offline syncing automatically!
 };
 
 export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
-  if (!supabase) return () => {};
-  
-  const fetchLocks = async () => {
-    const { data } = await supabase.from('locks').select('*');
+  const q = query(collection(firestore, 'locks'));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
     const now = Date.now();
-    const locks = (data || []).filter((l: any) => now - l.updated_at < 600000).map((l: any) => l.student_id);
+    const locks: string[] = [];
+    snapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      // Locks expire after 10 minutes (600,000 ms) of inactivity
+      if (now - data.timestamp < 600000) {
+        locks.push(docSnap.id);
+      }
+    });
     callback(locks);
-  };
-  
-  fetchLocks();
-  
-  const channel = supabase
-    .channel('locks_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'locks' }, () => {
-      fetchLocks();
-    })
-    .subscribe();
-    
-  return () => {
-    supabase.removeChannel(channel);
-  };
+  });
+  return unsubscribe;
 };
 
 export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
-  if (!supabase) return true;
   try {
-    const { data } = await supabase.from('locks').select('*').eq('student_id', studentId).single();
+    const lockRef = doc(firestore, 'locks', studentId);
+    const lockSnap = await getDoc(lockRef);
     const now = Date.now();
     
-    if (data) {
-      if (data.session_id !== sessionId && now - data.updated_at < 600000) {
+    if (lockSnap.exists()) {
+      const data = lockSnap.data();
+      if (data.sessionId !== sessionId && now - data.timestamp < 600000) {
         return false; // locked by someone else
       }
     }
     
-    await supabase.from('locks').upsert({ student_id: studentId, session_id: sessionId, updated_at: now });
+    await setDoc(lockRef, { sessionId, timestamp: now });
     return true;
   } catch (e) {
-    return true; // fail open
+    console.error("Lock error:", e);
+    return true; // fail open so students aren't blocked by db errors
   }
 };
 
 export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
-  if (!supabase) return;
   try {
-    await supabase.from('locks').upsert({ student_id: studentId, session_id: sessionId, updated_at: Date.now() });
+    const lockRef = doc(firestore, 'locks', studentId);
+    await setDoc(lockRef, { sessionId, timestamp: Date.now() }, { merge: true });
   } catch (e) {}
 };
 
 export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
-  if (!supabase) return;
   try {
-    const { data } = await supabase.from('locks').select('*').eq('student_id', studentId).single();
-    if (data && data.session_id === sessionId) {
-      await supabase.from('locks').delete().eq('student_id', studentId);
+    const lockRef = doc(firestore, 'locks', studentId);
+    const lockSnap = await getDoc(lockRef);
+    if (lockSnap.exists() && lockSnap.data().sessionId === sessionId) {
+      await deleteDoc(lockRef);
     }
   } catch (e) {}
 };
 
 export const forceReleaseLock = async (studentId: string): Promise<void> => {
-  if (!supabase) return;
   try {
-    await supabase.from('locks').delete().eq('student_id', studentId);
+    await deleteDoc(doc(firestore, 'locks', studentId));
   } catch (e) {}
 };
 
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
-  if (!supabase) throw new Error("Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
   try {
-    const { error } = await supabase.from('assessments').upsert({ 
-      id: result.id, 
-      data: result 
-    });
-    if (error) throw error;
+    // Save to Firebase
+    const docRef = doc(firestore, 'assessments', result.id);
+    await setDoc(docRef, result);
   } catch (e) {
-    console.error("Failed to save to Supabase:", e);
+    console.error("Failed to save to Firebase:", e);
     throw new Error("Cannot save to server. Data is only saved on this device.");
   }
 };
 
 export const getAssessments = async (): Promise<AssessmentResult[]> => {
-  if (!supabase) return [];
   try {
-    const { data, error } = await supabase.from('assessments').select('data').order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map((row: any) => row.data as AssessmentResult);
+    const q = query(collection(firestore, 'assessments'), orderBy('timestamp', 'desc'));
+    const snapshot = await getDocs(q);
+    const assessments: AssessmentResult[] = [];
+    snapshot.forEach(docSnap => {
+      assessments.push(docSnap.data() as AssessmentResult);
+    });
+    return assessments;
   } catch (err) {
     console.warn("Notice fetching assessments:", err);
     return [];
@@ -108,38 +95,22 @@ export const getAssessments = async (): Promise<AssessmentResult[]> => {
 };
 
 export const subscribeToAssessments = (callback: (assessments: AssessmentResult[], error?: string) => void): (() => void) => {
-  if (!supabase) {
-    callback([], "Supabase is not configured.");
-    return () => {};
-  }
-  
-  const fetchAll = async () => {
-    try {
-      const { data } = await supabase.from('assessments').select('data').order('created_at', { ascending: false });
-      if (data) {
-        callback(data.map((row: any) => row.data as AssessmentResult));
-      }
-    } catch (e) {}
-  };
-  
-  fetchAll();
-  
-  const channel = supabase
-    .channel('assessments_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
-      fetchAll();
-    })
-    .subscribe();
-    
-  return () => {
-    supabase.removeChannel(channel);
-  };
+  const q = query(collection(firestore, 'assessments'), orderBy('timestamp', 'desc'));
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const assessments: AssessmentResult[] = [];
+    snapshot.forEach(docSnap => {
+      assessments.push(docSnap.data() as AssessmentResult);
+    });
+    callback(assessments);
+  }, (error) => {
+    callback([], error.message);
+  });
+  return unsubscribe;
 };
 
 export const deleteAssessment = async (id: string): Promise<void> => {
-  if (!supabase) return;
   try {
-    await supabase.from('assessments').delete().eq('id', id);
+    await deleteDoc(doc(firestore, 'assessments', id));
   } catch (err) {
     console.error("Error deleting assessment:", err);
   }
