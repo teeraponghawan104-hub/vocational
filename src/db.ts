@@ -3,6 +3,37 @@ import { normalizeName } from './studentData';
 
 const CACHE_KEY = 'voca_assess_cache';
 
+export const syncOfflineData = async () => {
+  try {
+    const cachedRaw = localStorage.getItem(CACHE_KEY);
+    if (!cachedRaw) return;
+    const cached: AssessmentResult[] = JSON.parse(cachedRaw);
+    if (cached.length === 0) return;
+    
+    let remaining: AssessmentResult[] = [];
+    for (const result of cached) {
+      try {
+        const res = await fetch('/api/assessments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(result)
+        });
+        if (!res.ok) {
+          remaining.push(result);
+        }
+      } catch (e) {
+        remaining.push(result);
+      }
+    }
+    localStorage.setItem(CACHE_KEY, JSON.stringify(remaining));
+  } catch (e) {}
+};
+
+// Try to auto-sync when the module loads
+if (typeof window !== 'undefined') {
+  setTimeout(syncOfflineData, 2000);
+}
+
 export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
   callback([]);
   return () => {};
@@ -50,6 +81,7 @@ export const saveAssessment = async (result: AssessmentResult): Promise<void> =>
 
   if (!savedOk) {
     console.error("Critical: failed to reach /api/assessments after 3 attempts");
+    throw new Error("Cannot save to server. Data is only saved on this device.");
   }
 };
 
