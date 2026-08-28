@@ -27,8 +27,15 @@ export default function TeacherDashboard({ onBack }: Props) {
 
   useEffect(() => {
     setLoading(true);
-    const unsubscribe = subscribeToAssessments((data) => {
-      setResults(data.sort((a, b) => b.timestamp - a.timestamp));
+    const unsubscribe = subscribeToAssessments((data, err) => {
+      if (err) {
+        console.error("Teacher dashboard received error:", err);
+      }
+      if (data.length > 0 || !loading) {
+        setResults(data.sort((a, b) => b.timestamp - a.timestamp));
+      } else if (data.length === 0 && loading) {
+         setResults([]);
+      }
       setLoading(false);
     });
 
