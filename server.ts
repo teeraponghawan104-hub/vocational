@@ -108,6 +108,11 @@ async function startServer() {
     }
   });
 
+  // Fix for Service Worker Cache Trap: Return 404 for old SW scripts so browser unregisters them
+  app.get(['/sw.js', '/service-worker.js'], (req, res) => {
+    res.status(404).send('Service worker removed');
+  });
+
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
