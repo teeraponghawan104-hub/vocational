@@ -135,7 +135,7 @@ export default function StudentForm({ onSubmit, onViewResult }: Props) {
     setModalExistingResult(null);
 
     try {
-      // Step 1 & 5: Real-time atomic verification from Firestore
+      // Step 1 & 5: Real-time verification from Postgres backend API
       const eligibility = await checkStudentEligibilityRealTime(
         {
           room: selectedStudent.room,
