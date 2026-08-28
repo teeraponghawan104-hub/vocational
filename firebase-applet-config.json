@@ -1,9 +1,12 @@
 {
-  "projectId": "qerhyjtu",
-  "appId": "1:362683493969:web:160a8564b383239c795270",
-  "apiKey": "AIzaSyBP4eBD6sYwIlEKN7ttv9cUgw0dGf9Hyvw",
-  "authDomain": "qerhyjtu.firebaseapp.com",
-  "storageBucket": "qerhyjtu.firebasestorage.app",
-  "messagingSenderId": "362683493969",
-  "measurementId": "G-PC1QMK6V0G"
+  "projectId": "dogwood-provider-lcf5x",
+  "appId": "1:462562646689:web:d002cbc35d38f921706ee0",
+  "apiKey": "AIzaSyCqCrkizf9tfbLyZB8Hk7c8p6SPWMfDdHs",
+  "authDomain": "dogwood-provider-lcf5x.firebaseapp.com",
+  "firestoreDatabaseId": "ai-studio-vocationalreadin-d6c0b7f1-d85e-4b18-8aae-9564dab4b559",
+  "storageBucket": "dogwood-provider-lcf5x.firebasestorage.app",
+  "messagingSenderId": "462562646689",
+  "measurementId": "",
+  "oAuthClientId": "462562646689-9751d0dja2g7u43bn58gci92fuhrcu52.apps.googleusercontent.com",
+  "recaptchaSiteKey": ""
 }

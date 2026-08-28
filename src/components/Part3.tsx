@@ -92,37 +92,43 @@ export default function Part3({ initialAnswers = [], onChange, onComplete }: Pro
               </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 col-span-1 lg:col-span-7 xl:col-span-6 w-full">
               <button
+                type="button"
                 onClick={() => handleSelect(q.id, 'A')}
                 className={cn(
-                  "w-full px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border flex items-center justify-center text-sm font-semibold transition-all",
+                  "w-full px-3.5 py-3 rounded-xl border-2 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer select-none",
                   answers[q.id] === 'A' 
-                    ? "bg-slate-800 border-slate-900 text-white shadow-sm" 
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100"
+                    ? "bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-200/50 scale-[1.02]" 
+                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/40 active:scale-[0.98]"
                 )}
               >
-                A. ชอบ/ต้องการ
+                <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0", answers[q.id] === 'A' ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600")}>A</span>
+                <span>ชอบ / ต้องการ</span>
               </button>
               <button
+                type="button"
                 onClick={() => handleSelect(q.id, 'B')}
                 className={cn(
-                  "w-full px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border flex items-center justify-center text-sm font-semibold transition-all",
+                  "w-full px-3.5 py-3 rounded-xl border-2 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer select-none",
                   answers[q.id] === 'B' 
-                    ? "bg-slate-800 border-slate-900 text-white shadow-sm" 
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100"
+                    ? "bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-200/50 scale-[1.02]" 
+                    : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50/40 active:scale-[0.98]"
                 )}
               >
-                B. คิดดูก่อน/ไม่แน่ใจ
+                <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0", answers[q.id] === 'B' ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600")}>B</span>
+                <span>คิดดูก่อน / ไม่แน่ใจ</span>
               </button>
               <button
+                type="button"
                 onClick={() => handleSelect(q.id, 'X')}
                 className={cn(
-                  "w-full px-3 py-2.5 sm:px-4 sm:py-3 rounded-lg border flex items-center justify-center text-sm font-semibold transition-all",
+                  "w-full px-3.5 py-3 rounded-xl border-2 flex items-center justify-center gap-1.5 text-xs sm:text-sm font-semibold transition-all duration-150 cursor-pointer select-none",
                   answers[q.id] === 'X' 
-                    ? "bg-slate-800 border-slate-900 text-white shadow-sm" 
-                    : "border-slate-200 text-slate-600 hover:bg-slate-50 active:bg-slate-100"
+                    ? "bg-slate-800 border-slate-800 text-white shadow-md shadow-slate-300/50 scale-[1.02]" 
+                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-100/60 active:scale-[0.98]"
                 )}
               >
-                X. ไม่ชอบ/ไม่ต้องการ
+                <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0", answers[q.id] === 'X' ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600")}>X</span>
+                <span>ไม่ชอบ / ไม่ต้องการ</span>
               </button>
             </div>
           </div>

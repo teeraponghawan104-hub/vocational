@@ -8,7 +8,7 @@ import { ArrowLeft, Search, Filter, BarChart3, Users, Trash2, X, Download, Print
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid, PieChart, Pie } from 'recharts';
 import ResultDashboard from './ResultDashboard';
 import { getCareerRecommendations, riasecInterpretations } from '../data';
-import { students } from '../studentData';
+import { students, rooms } from '../studentData';
 
 interface Props {
   onBack: () => void;
@@ -83,18 +83,20 @@ export default function TeacherDashboard({ onBack }: Props) {
     
     element.style.height = 'auto';
     element.style.overflow = 'visible';
-    element.style.width = '1200px';
-    element.style.maxWidth = '1200px';
+    element.style.width = '1000px';
+    element.style.maxWidth = '1000px';
     
     window.dispatchEvent(new Event('resize'));
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 600));
     
     try {
       const dataUrl = await toPng(element, { 
         quality: 1, 
-        backgroundColor: '#FDFDFF',
+        backgroundColor: '#FFFFFF',
         pixelRatio: 2,
-        style: { transform: 'scale(1)', transformOrigin: 'top left', width: '1200px' },
+        skipFonts: true,
+        fontEmbedCSS: '',
+        style: { transform: 'scale(1)', transformOrigin: 'top left', width: '1000px' },
         filter: (node: any) => {
           if (node.hasAttribute && node.hasAttribute('data-hide-print')) return false;
           if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) return false;
@@ -104,10 +106,35 @@ export default function TeacherDashboard({ onBack }: Props) {
       
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
-        format: [1200, element.scrollHeight]
+        unit: 'mm',
+        format: 'a4'
       });
-      pdf.addImage(dataUrl, 'PNG', 0, 0, 1200, element.scrollHeight);
+
+      const imgWidth = 210;
+      const pageHeight = 297;
+      
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      const imgHeight = (img.height * imgWidth) / img.width;
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // First page
+      pdf.addImage(dataUrl, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight;
+
+      // Additional pages if needed (safety threshold 8mm to avoid trailing empty page)
+      while (heightLeft > 8) {
+        position = -(imgHeight - heightLeft);
+        pdf.addPage('a4', 'portrait');
+        pdf.addImage(dataUrl, 'PNG', 0, position, imgWidth, imgHeight, undefined, 'FAST');
+        heightLeft -= pageHeight;
+      }
+
       pdf.save(`รายงานภาพรวมครู_${new Date().toLocaleDateString('th-TH').replace(/\//g, '-')}.pdf`);
     } catch (err) {
       console.error('Error generating PDF', err);
@@ -138,8 +165,6 @@ export default function TeacherDashboard({ onBack }: Props) {
     }
   };
 
-
-  const rooms = Array.from(new Set(students.map(s => s.room))).sort();
 
   const filteredResults = results.filter(r => {
     if (!r || !r.student || !r.part1Score || !r.part2Score) return false;
@@ -251,7 +276,7 @@ export default function TeacherDashboard({ onBack }: Props) {
   }
 
   return (
-    <div className="min-h-screen print:h-auto print:bg-white bg-slate-50 text-slate-900 pb-12 animate-in fade-in duration-300 font-sans" id="pdf-teacher-content">
+    <div className="min-h-[100dvh] print:h-auto print:bg-white bg-slate-50 text-slate-900 pb-12 animate-in fade-in duration-300 font-sans pb-safe" id="pdf-teacher-content">
       {/* Print Warning Modal */}
       {showPrintWarning && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden" style={{ zIndex: 9999 }}>
@@ -282,30 +307,30 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
         </div>
       )}
-      <header className="h-auto md:h-16 py-3 md:py-0 bg-white border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden gap-3 md:gap-0" data-hide-print="true">
+      <header className="h-auto md:h-16 py-3 md:py-0 bg-white border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between px-3 sm:px-4 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden gap-2.5 md:gap-0" data-hide-print="true">
         <div className="flex items-center gap-2 md:gap-4 justify-between md:justify-start w-full md:w-auto">
-          <div className="flex items-center gap-2">
-            <button onClick={onBack} className="inline-flex items-center gap-2 p-2 px-3 hover:bg-slate-100 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium text-sm">
-              <ArrowLeft size={18} />
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            <button onClick={onBack} className="inline-flex items-center gap-1.5 p-1.5 px-2.5 sm:px-3 hover:bg-slate-100 rounded-lg transition text-slate-600 hover:text-slate-900 font-medium text-xs sm:text-sm">
+              <ArrowLeft size={16} />
               <span className="hidden sm:inline">กลับหน้าหลัก</span>
             </button>
             <div className="hidden sm:flex w-8 h-8 bg-white rounded-lg items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
               <img src="/school-logo.png" alt="School Logo" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-sm md:text-lg font-semibold tracking-tight text-slate-800 whitespace-nowrap truncate">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| ระบบจัดการสำหรับครู</span></h1>
+            <h1 className="text-xs sm:text-sm md:text-lg font-semibold tracking-tight text-slate-800 whitespace-nowrap truncate">โรงเรียนวรคุณอุปถัมภ์ <span className="hidden md:inline text-slate-400 font-normal ml-2">| ระบบจัดการสำหรับครู</span></h1>
           </div>
-          <div className="flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs md:hidden shrink-0 print:hidden whitespace-nowrap">
-            <Users size={14} className="shrink-0" />
+          <div className="flex items-center gap-1.5 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs md:hidden shrink-0 print:hidden whitespace-nowrap">
+            <Users size={13} className="shrink-0" />
             <span>{results.length} คน</span>
           </div>
         </div>
         <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-2" data-hide-print="true">
-          <div className="flex gap-2">
-            <button onClick={handleDownloadPdf} className="flex items-center justify-center gap-2 bg-slate-50 text-slate-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-slate-200 hover:bg-slate-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
+          <div className="flex gap-2 w-full md:w-auto">
+            <button onClick={handleDownloadPdf} className="flex items-center justify-center gap-1.5 bg-slate-50 text-slate-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-slate-200 hover:bg-slate-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
               <Printer size={14} className="shrink-0" />
               <span>พิมพ์ / PDF</span>
             </button>
-            <button onClick={exportToCSV} className="flex items-center justify-center gap-2 bg-emerald-50 text-emerald-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-emerald-100 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
+            <button onClick={exportToCSV} className="flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-emerald-100 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap flex-1 md:flex-none">
               <Download size={14} className="shrink-0" />
               <span>ส่งออก CSV</span>
             </button>
@@ -316,7 +341,7 @@ export default function TeacherDashboard({ onBack }: Props) {
           </div>
         </div>
       </header>
-      <div className="max-w-6xl mx-auto px-6 mt-8 print:mt-2 print:px-0 print:max-w-none">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 mt-4 sm:mt-8 print:mt-2 print:px-0 print:max-w-none">
         {/* Stats Row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 print:gap-2 print:mb-2 print:grid-cols-4">
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-5 hover:border-indigo-100 transition-colors print:p-2 print:rounded-lg">
@@ -552,7 +577,7 @@ export default function TeacherDashboard({ onBack }: Props) {
         {/* Table */}
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden print:hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left text-slate-500">
+            <table className="w-full text-sm text-left text-slate-500 min-w-[680px]">
               <thead className="text-xs text-slate-400 uppercase bg-slate-50/50 font-bold tracking-wider">
                 <tr className="border-b border-slate-200">
                   <th className="px-6 py-5">ห้อง / เลขที่</th>

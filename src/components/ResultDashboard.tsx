@@ -61,42 +61,88 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
   const highestDptKey = sortedDpt[0][0];
   const dominantDpt = dptInterpretations[highestDptKey];
 
+  const handlePrint = () => {
+    if (window.self !== window.top) {
+      setShowPrintWarning(true);
+    } else {
+      window.print();
+    }
+  };
+
   const handleDownloadPdf = async () => {
-    const element = document.getElementById('pdf-content');
+    const element = document.getElementById('printable-student-report');
     if (!element) return;
     
     const originalHeight = element.style.height;
     const originalOverflow = element.style.overflow;
     const originalWidth = element.style.width;
     const originalMaxWidth = element.style.maxWidth;
+    const originalPadding = element.style.padding;
+    const originalMargin = element.style.margin;
     
+    // Set standard rendering width suitable for A4 aspect ratio (800px)
     element.style.height = 'auto';
     element.style.overflow = 'visible';
-    element.style.width = '1000px';
-    element.style.maxWidth = '1000px';
+    element.style.width = '800px';
+    element.style.maxWidth = '800px';
+    element.style.padding = '16px';
+    element.style.margin = '0 auto';
     
     window.dispatchEvent(new Event('resize'));
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     try {
       const dataUrl = await toPng(element, { 
         quality: 1, 
-        backgroundColor: '#FDFDFF',
+        backgroundColor: '#FFFFFF',
         pixelRatio: 2,
-        style: { transform: 'scale(1)', transformOrigin: 'top left', width: '1000px' },
+        skipFonts: true,
+        fontEmbedCSS: '',
+        style: { transform: 'scale(1)', transformOrigin: 'top left', width: '800px' },
         filter: (node: any) => {
           if (node.hasAttribute && node.hasAttribute('data-hide-print')) return false;
           if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) return false;
           return true;
         }
       });
-      
+
       const pdf = new jsPDF({
         orientation: 'portrait',
-        unit: 'px',
-        format: [1000, element.scrollHeight]
+        unit: 'mm',
+        format: 'a4'
       });
-      pdf.addImage(dataUrl, 'PNG', 0, 0, 1000, element.scrollHeight);
+
+      const pdfPageWidth = 210;
+      const pdfPageHeight = 297;
+      
+      const img = new Image();
+      img.src = dataUrl;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+
+      // Calculate image aspect ratio
+      const imgAspect = img.height / img.width;
+
+      // Fit with standard 8mm margin
+      const margin = 8;
+      const maxAvailableWidth = pdfPageWidth - (margin * 2); // 194mm
+      const maxAvailableHeight = pdfPageHeight - (margin * 2); // 281mm
+
+      let renderWidth = maxAvailableWidth;
+      let renderHeight = renderWidth * imgAspect;
+
+      // If render height exceeds page budget, scale down so it fits perfectly on ONE single A4 page
+      if (renderHeight > maxAvailableHeight) {
+        renderHeight = maxAvailableHeight;
+        renderWidth = renderHeight / imgAspect;
+      }
+
+      // Center horizontally and vertically within A4 page
+      const xOffset = (pdfPageWidth - renderWidth) / 2;
+      const yOffset = (pdfPageHeight - renderHeight) / 2;
+
+      pdf.addImage(dataUrl, 'PNG', xOffset, yOffset, renderWidth, renderHeight, undefined, 'FAST');
       pdf.save(`ผลการทดสอบ_${student.firstName}_${student.lastName}.pdf`);
     } catch (err) {
       console.error('Error generating PDF', err);
@@ -106,40 +152,40 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
       element.style.overflow = originalOverflow;
       element.style.width = originalWidth;
       element.style.maxWidth = originalMaxWidth;
+      element.style.padding = originalPadding;
+      element.style.margin = originalMargin;
     }
   };
 
-
-
   const handleSaveImage = async () => {
-    const element = document.getElementById('pdf-content');
+    const element = document.getElementById('printable-student-report');
     if (!element) return;
     
-    // Save original styles
     const originalHeight = element.style.height;
     const originalOverflow = element.style.overflow;
     const originalWidth = element.style.width;
     const originalMaxWidth = element.style.maxWidth;
+    const originalPadding = element.style.padding;
     
-    // Force a specific wide width
     element.style.height = 'auto';
     element.style.overflow = 'visible';
-    element.style.width = '1000px';
-    element.style.maxWidth = '1000px';
+    element.style.width = '880px';
+    element.style.maxWidth = '880px';
+    element.style.padding = '24px';
     
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise(resolve => setTimeout(resolve, 200));
     
     try {
       const dataUrl = await toPng(element, { 
         quality: 1, 
-        backgroundColor: '#FDFDFF',
+        backgroundColor: '#FFFFFF',
         pixelRatio: 2,
-        width: 1000,
-        height: element.scrollHeight,
+        skipFonts: true,
+        fontEmbedCSS: '',
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left',
-          width: '1000px'
+          width: '880px'
         },
         filter: (node: any) => {
           if (node.hasAttribute && node.hasAttribute('data-hide-print')) return false;
@@ -160,11 +206,12 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
       element.style.overflow = originalOverflow;
       element.style.width = originalWidth;
       element.style.maxWidth = originalMaxWidth;
+      element.style.padding = originalPadding;
     }
   };
 
   return (
-    <div className="flex flex-col h-screen print:h-auto print:overflow-visible w-full bg-[#FDFDFF] text-slate-900 overflow-y-auto font-sans" id="pdf-content">
+    <div className="flex flex-col min-h-[100dvh] print:h-auto print:overflow-visible w-full bg-[#FDFDFF] text-slate-900 overflow-y-auto font-sans pb-safe" id="pdf-content">
       {/* Print Warning Modal */}
       {showPrintWarning && (
         <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden" style={{ zIndex: 9999 }}>
@@ -195,6 +242,8 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
           </div>
         </div>
       )}
+
+      {/* Screen Header */}
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
         <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 pr-2">
           <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center shrink-0 overflow-hidden p-0.5 border border-slate-200">
@@ -205,120 +254,150 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0" data-hide-print="true">
           <button
             onClick={handleSaveImage}
-            className="inline-flex items-center justify-center gap-2 bg-emerald-50 text-emerald-600 border border-emerald-200 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-emerald-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
-            title="บันทึกรูปภาพ"
+            className="inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-lg hover:bg-emerald-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+            title="บันทึกรูปภาพ PNG"
           >
-            <Download size={16} className="shrink-0" />
+            <Download size={15} className="shrink-0" />
             <span className="hidden md:inline">บันทึกรูปภาพ</span>
           </button>
           <button
             onClick={handleDownloadPdf}
-            className="inline-flex items-center justify-center gap-2 bg-indigo-600 text-white border border-transparent w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-indigo-700 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
-            title="พิมพ์ / PDF"
+            className="inline-flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-lg hover:bg-indigo-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
+            title="ดาวน์โหลดไฟล์ PDF A4"
           >
-            <Printer size={16} className="shrink-0" />
-            <span className="hidden md:inline">พิมพ์ / PDF</span>
+            <Download size={15} className="shrink-0" />
+            <span className="hidden md:inline">ดาวน์โหลด PDF</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center justify-center gap-1.5 bg-indigo-600 text-white border border-transparent px-2.5 py-1.5 md:px-3.5 md:py-1.5 rounded-lg hover:bg-indigo-700 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 shadow-xs"
+            title="พิมพ์รายงาน A4"
+          >
+            <Printer size={15} className="shrink-0" />
+            <span>พิมพ์ / PDF</span>
           </button>
           {isTeacherView ? (
             <button 
                onClick={onRestart}
-               className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
+               className="inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
             >
-              <span className="hidden md:inline">ปิด</span>
-              <span className="md:hidden">ปิด</span>
+              <span>ปิด</span>
             </button>
           ) : (
             <button 
                onClick={onRestart}
-               className="inline-flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-600 w-8 h-8 md:w-auto md:h-auto md:px-4 md:py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 p-0 md:p-1.5"
+               className="inline-flex items-center justify-center gap-1.5 bg-white border border-slate-200 text-slate-600 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-lg hover:bg-slate-50 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
                title="กลับหน้าหลัก"
             >
-              <RefreshCw size={16} className="shrink-0 md:hidden" />
-              <span className="hidden md:inline">กลับหน้าหลัก</span>
+              <RefreshCw size={14} className="shrink-0" />
+              <span className="hidden sm:inline">กลับหน้าหลัก</span>
             </button>
           )}
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto p-4 md:p-8 w-full animate-in fade-in duration-500 pb-20 print:p-0 print:m-0 print:max-w-none">
-        <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden print:rounded-none print:border-none print:shadow-none">
+      <div id="printable-student-report" className="max-w-5xl mx-auto p-3 sm:p-6 md:p-8 w-full animate-in fade-in duration-500 pb-20 print:p-0 print:m-0 print:pb-0 print:max-w-none bg-white">
+        
+        {/* Official Document Header (Visible in Print and PDF/Image Export) */}
+        <div className="flex items-center justify-between pb-3 mb-3 sm:mb-4 border-b-2 border-indigo-600 shrink-0">
+          <div className="flex items-center gap-2.5 sm:gap-3">
+            <img src="/school-logo.png" alt="โลโก้โรงเรียน" className="w-10 h-10 sm:w-12 sm:h-12 object-contain shrink-0" />
+            <div>
+              <h2 className="text-sm sm:text-base font-bold text-slate-900 leading-tight">โรงเรียนวรคุณอุปถัมภ์</h2>
+              <p className="text-[11px] sm:text-xs text-indigo-700 font-semibold">รายงานผลการประเมินความพร้อมทางอาชีพ (Holland Codes & D-P-T Model)</p>
+            </div>
+          </div>
+          <div className="text-right text-[9px] sm:text-[10px] text-slate-500">
+            <p className="font-semibold text-slate-700">กลุ่มสาระการเรียนรู้แนะแนว</p>
+            <p>วันที่ออกเอกสาร: {new Date().toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-sm border border-slate-200 overflow-hidden print:rounded-none print:border-none print:shadow-none">
           
           {/* Header */}
-          <div className="border-b border-slate-100 p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 print:p-4 print:pb-2 print:flex-row print:items-center print:gap-4">
-            <div className="flex items-center gap-4 sm:gap-6 print:gap-3">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl sm:text-2xl uppercase border-4 border-white shadow-sm shrink-0 print:w-10 print:h-10 print:text-lg">
+          <div className="border-b border-slate-100 p-4 sm:p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 sm:gap-6 print:p-3 print:pb-2 print:flex-row print:items-center print:gap-4 print:border-b print:border-slate-200">
+            <div className="flex items-center gap-3 sm:gap-6 print:gap-3">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-700 font-bold text-lg sm:text-2xl uppercase border-4 border-white shadow-sm shrink-0 print:w-11 print:h-11 print:text-base print:border-2">
                 {student.firstName.charAt(0)}{student.lastName.charAt(0)}
               </div>
-              <div>
-                <div className="text-[10px] sm:text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 print:text-[8px] print:mb-0">ผลการประเมินความพร้อมทางอาชีพ</div>
-                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-slate-800 print:text-lg">{student.firstName} {student.lastName}</h1>
-                <p className="text-slate-500 font-medium text-xs sm:text-sm md:text-base mt-1 print:text-[10px] print:mt-0">ชั้น {student.room} • เลขที่ {student.studentNumber}</p>
+              <div className="min-w-0">
+                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5 sm:mb-1 print:text-[8px] print:mb-0">ข้อมูลนักเรียนผู้รับการประเมิน</div>
+                <h1 className="text-lg sm:text-2xl md:text-3xl font-bold text-slate-800 print:text-base truncate">{student.firstName} {student.lastName}</h1>
+                <p className="text-slate-500 font-medium text-xs sm:text-sm md:text-base mt-0.5 sm:mt-1 print:text-[10px] print:mt-0 flex items-center flex-wrap gap-x-2 gap-y-1">
+                  <span>ชั้นมัธยมศึกษาปีที่ {student.room} • เลขที่ {student.studentNumber}</span>
+                  {result.timestamp && (
+                    <span className="text-[11px] sm:text-xs text-slate-400 font-normal bg-slate-100 px-2 py-0.5 rounded-md print:bg-transparent print:p-0">
+                      ทำแบบทดสอบเมื่อ {new Date(result.timestamp).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} น.
+                    </span>
+                  )}
+                </p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-4 sm:px-6 py-3 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 w-full md:w-auto justify-between md:justify-start print:px-3 print:py-2 print:rounded-lg">
+            <div className="flex items-center gap-3 sm:gap-4 bg-slate-50 px-3.5 sm:px-6 py-2.5 sm:py-4 rounded-xl sm:rounded-2xl border border-slate-100 w-full md:w-auto justify-between md:justify-start print:px-3 print:py-1.5 print:rounded-lg print:border-slate-200">
               <div>
-                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-1 text-left md:text-right print:text-[8px] print:mb-0">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
-                <div className="text-xl sm:text-2xl font-black text-slate-800 text-left md:text-right print:text-lg">{part3ConsistencyPercentage}%</div>
+                <div className="text-[10px] uppercase tracking-widest text-slate-400 font-bold mb-0.5 sm:mb-1 text-left md:text-right print:text-[8px] print:mb-0">ความมั่นใจในตนเอง (ส่วนที่ 3)</div>
+                <div className="text-lg sm:text-2xl font-black text-slate-800 text-left md:text-right print:text-base">{part3ConsistencyPercentage}%</div>
               </div>
-              <div className={cn("px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[10px] sm:text-xs uppercase tracking-wider text-center shrink-0 print:px-2 print:py-1 print:text-[8px]", confidence.bg, confidence.color)}>
+              <div className={cn("px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg font-bold text-[11px] sm:text-xs uppercase tracking-wider text-center shrink-0 print:px-2 print:py-0.5 print:text-[9px]", confidence.bg, confidence.color)}>
                 ระดับ{confidence.text}
               </div>
             </div>
           </div>
 
-          <div className="p-5 sm:p-8 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-10 print:p-2 print:grid-cols-2 print:gap-2">
+          <div className="p-4 sm:p-6 md:p-10 grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-10 print:p-2 print:grid-cols-2 print:gap-3">
             
             {/* Part 1: RIASEC */}
-            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-lg print:border-slate-200">
-              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 print:mb-2 print:text-sm">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm print:w-6 print:h-6 print:text-xs">1</div>
+            <div className="bg-slate-50 p-4 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-xl print:border-slate-200">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-6 flex items-center gap-2 print:mb-2 print:text-xs">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-xs sm:text-sm font-bold print:w-5 print:h-5 print:text-[10px]">1</div>
                 สรุปความสนใจด้านอาชีพ (RIASEC)
               </h3>
-              <div className="h-[250px] sm:h-[300px] w-full max-w-sm mx-auto mb-6 print:h-[180px] print:mb-2">
+              <div className="h-[230px] sm:h-[280px] w-full max-w-sm mx-auto mb-3 sm:mb-6 print:h-[160px] print:mb-1">
                 <ResponsiveContainer width="100%" height="100%">
                   <RadarChart cx="50%" cy="50%" outerRadius="60%" data={riasecData}>
-                    <PolarGrid stroke="#e2e8f0" />
-                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#64748b', fontSize: 11, fontWeight: 600 }} />
-                    <Radar name="Score" dataKey="score" stroke="#4f46e5" strokeWidth={2} fill="#6366f1" fillOpacity={0.2} isAnimationActive={false} />
+                    <PolarGrid stroke="#cbd5e1" />
+                    <PolarAngleAxis dataKey="subject" tick={{ fill: '#475569', fontSize: 10, fontWeight: 600 }} />
+                    <Radar name="Score" dataKey="score" stroke="#4f46e5" strokeWidth={2} fill="#6366f1" fillOpacity={0.25} isAnimationActive={false} />
                     <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
                   </RadarChart>
                 </ResponsiveContainer>
               </div>
-              <div className="grid grid-cols-2 gap-2 text-xs sm:text-sm mt-auto print:gap-1 print:text-[10px]">
+              <div className="grid grid-cols-2 print:grid-cols-3 gap-2 text-xs sm:text-sm mt-auto print:gap-1 print:text-[9px]">
                 {riasecData.map(d => (
-                  <div key={d.subject} className="flex justify-between items-center bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl shadow-sm border border-slate-100 print:px-2 print:py-1 print:rounded-md">
-                    <span className="font-medium text-slate-600 truncate mr-2">{d.label.split(' ')[0]}</span>
-                    <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md print:bg-transparent print:px-0 print:py-0">{d.score}</span>
+                  <div key={d.subject} className="flex justify-between items-center bg-white px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl shadow-xs border border-slate-100 print:px-1.5 print:py-1 print:rounded-md print:border-slate-200">
+                    <span className="font-medium text-slate-600 truncate mr-1 text-[11px] sm:text-xs print:text-[9px]">{d.label.split(' ')[0]}</span>
+                    <span className="font-bold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded-md text-xs print:bg-transparent print:px-0 print:py-0 print:text-[9px]">{d.score}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* Part 2: D-P-T */}
-            <div className="bg-slate-50 p-5 sm:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-lg print:border-slate-200">
-              <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2 print:mb-2 print:text-sm">
-                <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-sm print:w-6 print:h-6 print:text-xs">2</div>
+            <div className="bg-slate-50 p-4 sm:p-6 md:p-8 rounded-2xl md:rounded-3xl border border-slate-100 flex flex-col hover:-translate-y-1 hover:shadow-lg transition-all duration-300 print:break-inside-avoid print:p-3 print:rounded-xl print:border-slate-200">
+              <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-6 flex items-center gap-2 print:mb-2 print:text-xs">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-lg flex items-center justify-center text-indigo-600 shadow-sm border border-slate-200 text-xs sm:text-sm font-bold print:w-5 print:h-5 print:text-[10px]">2</div>
                 สรุปความถนัดทางอาชีพ (D-P-T)
               </h3>
-              <div className="min-h-[220px] sm:min-h-[256px] h-full mt-4 mb-6 print:h-[150px] print:mt-1 print:mb-2 w-full max-w-sm mx-auto">
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={dptData} layout="vertical" margin={{ top: 5, right: 20, left: 80, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                    <XAxis type="number" domain={[0, 36]} tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="name" type="category" width={90} tick={{ fill: '#475569', fontSize: 10, fontWeight: 600 }} axisLine={false} tickLine={false} />
+              <div className="min-h-[190px] sm:min-h-[220px] h-[200px] sm:h-[240px] mt-1 sm:mt-2 mb-3 sm:mb-4 print:h-[130px] print:min-h-[130px] print:mt-0 print:mb-1 w-full max-w-sm mx-auto">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dptData} layout="vertical" margin={{ top: 5, right: 15, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+                    <XAxis type="number" domain={[0, 36]} tick={{ fill: '#64748b', fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis dataKey="name" type="category" width={80} tick={{ fill: '#334155', fontSize: 9, fontWeight: 600 }} axisLine={false} tickLine={false} />
                     <Tooltip cursor={{ fill: '#f1f5f9' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
-                    <Bar dataKey="score" fill="#4f46e5" radius={[0, 8, 8, 0]} barSize={20} isAnimationActive={false} />
+                    <Bar dataKey="score" fill="#4f46e5" radius={[0, 6, 6, 0]} barSize={18} isAnimationActive={false} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               
-              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm mt-auto print:p-2 print:rounded-lg print:border-slate-200">
-                <div className="text-sm font-bold text-indigo-600 mb-2 print:mb-1 print:text-xs">ความถนัดที่โดดเด่นที่สุด: {dominantDpt.title}</div>
-                <p className="text-sm text-slate-600 leading-relaxed print:text-[10px] print:leading-normal">
+              <div className="bg-white p-3.5 sm:p-5 rounded-xl sm:rounded-2xl border border-slate-100 shadow-xs mt-auto print:p-2 print:rounded-lg print:border-slate-200">
+                <div className="text-xs sm:text-sm font-bold text-indigo-600 mb-1 print:mb-0.5 print:text-[10px]">ความถนัดที่โดดเด่น: {dominantDpt.title}</div>
+                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed print:text-[9px] print:leading-tight break-words">
                   {dominantDpt.desc}
                 </p>
-                <div className="mt-3 text-sm print:mt-1 print:text-[10px]">
+                <div className="mt-2 text-xs sm:text-sm print:mt-1 print:text-[9px] break-words">
                   <span className="font-bold text-slate-700">อาชีพที่สอดคล้อง: </span>
                   <span className="text-slate-600">{dominantDpt.careers}</span>
                 </div>
@@ -326,57 +405,53 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
             {/* Detailed Interpretation */}
-            <div className="lg:col-span-2 space-y-6 sm:space-y-8 print:break-inside-avoid print:space-y-2 print:col-span-2 print:mt-0">
-              <div className="bg-indigo-600 p-1 rounded-2xl md:rounded-3xl shadow-lg print:bg-transparent print:p-0 print:shadow-none">
-                <div className="bg-white rounded-[14px] md:rounded-[22px] p-5 sm:p-8 md:p-10 print:rounded-lg print:border print:border-slate-200 print:p-3">
-                  <div className="flex items-center gap-3 mb-6 sm:mb-8 pb-4 sm:pb-6 border-b border-slate-100 print:mb-2 print:pb-2 print:gap-2">
-                    <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-xl shrink-0 print:p-1.5 print:rounded-md">
-                      <User size={24} strokeWidth={2} className="print:w-5 print:h-5" />
+            <div className="lg:col-span-2 space-y-4 sm:space-y-8 print:break-inside-avoid print:space-y-0 print:col-span-2 print:mt-1">
+              <div className="bg-indigo-600 p-0.5 sm:p-1 rounded-2xl md:rounded-3xl shadow-lg print:bg-transparent print:p-0 print:shadow-none">
+                <div className="bg-white rounded-[14px] md:rounded-[22px] p-4 sm:p-8 md:p-10 print:rounded-xl print:border print:border-slate-200 print:p-3">
+                  <div className="flex items-center gap-3 mb-3 sm:mb-6 pb-2 sm:pb-4 border-b border-slate-100 print:mb-2 print:pb-1.5 print:gap-2">
+                    <div className="bg-indigo-100 text-indigo-600 p-2 sm:p-3 rounded-xl shrink-0 print:p-1 print:rounded-md">
+                      <User size={20} strokeWidth={2} className="print:w-4 print:h-4" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-800 print:text-base">การแปลผลบุคลิกภาพ</h2>
-                      <p className="text-slate-500 print:text-xs">วิเคราะห์จากความสนใจด้านอาชีพ (RIASEC)</p>
+                      <h2 className="text-base sm:text-2xl font-bold text-slate-800 print:text-xs">การแปลผลบุคลิกภาพและความสนใจ (RIASEC)</h2>
+                      <p className="text-xs text-slate-500 print:text-[9px]">วิเคราะห์จากผลคะแนนสูงสุด: <strong className="text-indigo-700">{dominantRiasec.title}</strong></p>
                     </div>
                   </div>
-                  
-                  <div className="mb-6 print:mb-2">
-                    <h3 className="text-xl font-bold text-indigo-700 mb-2 print:text-sm print:mb-1">{dominantRiasec.title}</h3>
-                  </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-4">
-                    <div className="space-y-6 print:space-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 print:gap-2">
+                    <div className="space-y-3 sm:space-y-5 print:space-y-1.5">
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
-                          <BookOpen size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 mb-1 text-xs sm:text-sm print:mb-0.5 print:text-[10px]">
+                          <BookOpen size={15} className="text-indigo-500 print:w-3 print:h-3 shrink-0" />
                           ลักษณะโดยทั่วไป
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm print:text-[10px] print:leading-normal">{dominantRiasec.general}</p>
+                        <p className="text-slate-600 leading-relaxed text-xs sm:text-sm print:text-[9px] print:leading-snug break-words">{dominantRiasec.general}</p>
                       </div>
                       
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
-                          <CheckCircle2 size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 mb-1 text-xs sm:text-sm print:mb-0.5 print:text-[10px]">
+                          <CheckCircle2 size={15} className="text-indigo-500 print:w-3 print:h-3 shrink-0" />
                           ลักษณะเด่นของบุคลิกภาพ
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 print:p-2 print:rounded-lg print:text-[10px] print:leading-normal print:bg-transparent print:border-slate-200">{dominantRiasec.distinctive}</p>
+                        <p className="text-slate-600 leading-relaxed text-xs sm:text-sm bg-indigo-50/50 p-2.5 sm:p-4 rounded-xl border border-indigo-100 print:p-1.5 print:rounded-md print:text-[9px] print:leading-snug print:bg-transparent print:border-slate-200 break-words">{dominantRiasec.distinctive}</p>
                       </div>
                     </div>
                     
-                    <div className="space-y-6 print:space-y-2">
+                    <div className="space-y-3 sm:space-y-5 print:space-y-1.5">
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
-                          <Briefcase size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 mb-1 text-xs sm:text-sm print:mb-0.5 print:text-[10px]">
+                          <Briefcase size={15} className="text-indigo-500 print:w-3 print:h-3 shrink-0" />
                           อาชีพที่สอดคล้องกับบุคลิกภาพ
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm print:text-[10px] print:leading-normal">{dominantRiasec.careers}</p>
+                        <p className="text-slate-600 leading-relaxed text-xs sm:text-sm print:text-[9px] print:leading-snug break-words">{dominantRiasec.careers}</p>
                       </div>
                       
                       <div>
-                        <h4 className="font-bold text-slate-800 flex items-center gap-2 mb-2 print:mb-1 print:text-xs">
-                          <GraduationCap size={18} className="text-indigo-500 print:w-3.5 print:h-3.5" />
+                        <h4 className="font-bold text-slate-800 flex items-center gap-1.5 mb-1 text-xs sm:text-sm print:mb-0.5 print:text-[10px]">
+                          <GraduationCap size={15} className="text-indigo-500 print:w-3 print:h-3 shrink-0" />
                           สาขาวิชาที่อาจเลือกศึกษา
                         </h4>
-                        <p className="text-slate-600 leading-relaxed text-sm print:text-[10px] print:leading-normal">{dominantRiasec.majors}</p>
+                        <p className="text-slate-600 leading-relaxed text-xs sm:text-sm print:text-[9px] print:leading-snug break-words">{dominantRiasec.majors}</p>
                       </div>
                     </div>
                   </div>
@@ -386,6 +461,12 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
             </div>
 
           </div>
+        </div>
+
+        {/* Document Footer */}
+        <div className="flex items-center justify-between pt-3 mt-3 border-t border-slate-200 text-[9px] sm:text-[10px] text-slate-500">
+          <span>แบบทดสอบความพร้อมทางอาชีพ โรงเรียนวรคุณอุปถัมภ์ (Holland Codes & D-P-T Model)</span>
+          <span>เอกสารรายงานผลประเมินรายบุคคล</span>
         </div>
       </div>
     </div>
