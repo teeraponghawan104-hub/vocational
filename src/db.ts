@@ -16,85 +16,81 @@ export const renewLock = async (studentId: string, sessionId: string): Promise<v
 export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {};
 export const forceReleaseLock = async (studentId: string): Promise<void> => {};
 
-const mergeWithCache = (remote: AssessmentResult[]): AssessmentResult[] => {
-  try {
-    const cachedRaw = localStorage.getItem(CACHE_KEY);
-    const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
-    const map = new Map<string, AssessmentResult>();
-    
-    cached.forEach(a => map.set(a.id || `${a.student.room}-${a.student.studentNumber}-${a.timestamp}`, a));
-    remote.forEach(a => map.set(a.id || `${a.student.room}-${a.student.studentNumber}-${a.timestamp}`, a));
-    
-    const merged = Array.from(map.values());
-    localStorage.setItem(CACHE_KEY, JSON.stringify(merged));
-    return merged;
-  } catch (e) {
-    return remote;
-  }
-};
-
-const getCachedOnly = (): AssessmentResult[] => {
-  try {
-    const cachedRaw = localStorage.getItem(CACHE_KEY);
-    return cachedRaw ? JSON.parse(cachedRaw) : [];
-  } catch (e) {
-    return [];
-  }
-};
-
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
+  let savedOk = false;
+  
+  // Try sending to server with up to 3 attempts
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const res = await fetch('/api/assessments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(result)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.id) result.id = data.id;
+        savedOk = true;
+        break;
+      }
+    } catch (err: any) {
+      console.warn(`Attempt ${attempt} saving assessment failed:`, err?.message || err);
+      await new Promise(r => setTimeout(r, 800));
+    }
+  }
+
+  // Backup to localStorage
   try {
     const cachedRaw = localStorage.getItem(CACHE_KEY);
     const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
-    cached.push(result);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+    const filtered = cached.filter(a => a.id !== result.id);
+    filtered.push(result);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(filtered));
   } catch (e) {}
 
-  try {
-    const res = await fetch('/api/assessments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(result)
-    });
-    if (!res.ok) throw new Error('Failed to save to database');
-    const data = await res.json();
-    result.id = data.id;
-  } catch (err: any) {
-    console.warn("Notice saving assessment:", err?.message || err);
+  if (!savedOk) {
+    console.error("Critical: failed to reach /api/assessments after 3 attempts");
   }
 };
 
 export const getAssessments = async (): Promise<AssessmentResult[]> => {
   try {
-    const res = await fetch('/api/assessments');
+    const res = await fetch('/api/assessments?t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) throw new Error('Failed to fetch');
-    const remoteAssessments = await res.json();
-    return mergeWithCache(remoteAssessments);
+    const remoteAssessments: AssessmentResult[] = await res.json();
+    return remoteAssessments;
   } catch (err: any) {
     console.warn("Notice fetching assessments:", err?.message || err);
-    return getCachedOnly();
+    try {
+      const cachedRaw = localStorage.getItem(CACHE_KEY);
+      return cachedRaw ? JSON.parse(cachedRaw) : [];
+    } catch (e) {
+      return [];
+    }
   }
 };
 
 export const subscribeToAssessments = (callback: (assessments: AssessmentResult[], error?: string) => void): (() => void) => {
-  callback(getCachedOnly());
-
+  let isMounted = true;
   let intervalId: any;
   
   const fetchAndCallback = async () => {
     try {
-      const res = await fetch('/api/assessments');
-      if (res.ok) {
-        const remoteAssessments = await res.json();
-        callback(mergeWithCache(remoteAssessments));
+      const res = await fetch('/api/assessments?t=' + Date.now(), { cache: 'no-store' });
+      if (res.ok && isMounted) {
+        const remoteAssessments: AssessmentResult[] = await res.json();
+        callback(remoteAssessments);
       }
     } catch (e) {}
   };
 
   fetchAndCallback();
-  intervalId = setInterval(fetchAndCallback, 5000);
+  intervalId = setInterval(fetchAndCallback, 2500);
 
-  return () => clearInterval(intervalId);
+  return () => {
+    isMounted = false;
+    clearInterval(intervalId);
+  };
 };
 
 export const deleteAssessment = async (id: string): Promise<void> => {

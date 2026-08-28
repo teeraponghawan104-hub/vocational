@@ -67,29 +67,33 @@ async function startServer() {
       const result = req.body;
       const id = result.id || Math.random().toString(36).substring(2, 15);
       
+      console.log(`[API POST] Receiving assessment for ${result.student?.firstName} ${result.student?.lastName} (Room: ${result.student?.room}, No: ${result.student?.studentNumber})`);
+      
+      await db.delete(assessments).where(eq(assessments.id, id));
       await db.insert(assessments).values({
         id,
-        timestamp: result.timestamp,
-        firstName: result.student.firstName,
-        lastName: result.student.lastName,
-        classLevel: result.student.classLevel,
-        room: result.student.room,
-        studentNumber: result.student.studentNumber,
-        part1ScoreR: result.part1Score.R,
-        part1ScoreI: result.part1Score.I,
-        part1ScoreS: result.part1Score.S,
-        part1ScoreC: result.part1Score.C,
-        part1ScoreE: result.part1Score.E,
-        part1ScoreA: result.part1Score.A,
-        part2ScoreD: result.part2Score.D,
-        part2ScoreP: result.part2Score.P,
-        part2ScoreT: result.part2Score.T,
-        part3ConsistencyPercentage: result.part3ConsistencyPercentage
+        timestamp: Number(result.timestamp) || Date.now(),
+        firstName: String(result.student?.firstName || ''),
+        lastName: String(result.student?.lastName || ''),
+        classLevel: String(result.student?.classLevel || ''),
+        room: String(result.student?.room || ''),
+        studentNumber: String(result.student?.studentNumber || ''),
+        part1ScoreR: Number(result.part1Score?.R) || 0,
+        part1ScoreI: Number(result.part1Score?.I) || 0,
+        part1ScoreS: Number(result.part1Score?.S) || 0,
+        part1ScoreC: Number(result.part1Score?.C) || 0,
+        part1ScoreE: Number(result.part1Score?.E) || 0,
+        part1ScoreA: Number(result.part1Score?.A) || 0,
+        part2ScoreD: Number(result.part2Score?.D) || 0,
+        part2ScoreP: Number(result.part2Score?.P) || 0,
+        part2ScoreT: Number(result.part2Score?.T) || 0,
+        part3ConsistencyPercentage: Number(result.part3ConsistencyPercentage) || 0
       });
       
+      console.log(`[API POST] Assessment saved successfully: ${id}`);
       res.json({ success: true, id });
     } catch (e: any) {
-      console.error(e);
+      console.error("[API POST Error]:", e);
       res.status(500).json({ error: e.message });
     }
   });

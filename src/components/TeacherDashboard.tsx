@@ -31,11 +31,7 @@ export default function TeacherDashboard({ onBack }: Props) {
       if (err) {
         console.warn("Teacher dashboard received error:", err);
       }
-      if (data.length > 0 || !loading) {
-        setResults(data.sort((a, b) => b.timestamp - a.timestamp));
-      } else if (data.length === 0 && loading) {
-         setResults([]);
-      }
+      setResults([...data].sort((a, b) => b.timestamp - a.timestamp));
       setLoading(false);
     });
 
