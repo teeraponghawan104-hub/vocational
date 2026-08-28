@@ -4,7 +4,7 @@ import StudentForm from './components/StudentForm';
 import AssessmentLockdown from './components/AssessmentLockdown';
 import ResultDashboard from './components/ResultDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
-import { LogIn, Users } from 'lucide-react';
+import { LogIn, Users, AlertTriangle, Megaphone, Clock } from 'lucide-react';
 
 export default function App() {
   const [step, setStep] = useState<'login' | 'assessment' | 'result' | 'teacher'>('login');
@@ -32,6 +32,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col relative">
+      {/* Maintenance Announcement Top Bar */}
+      <aside aria-label="แถบประกาศแจ้งเตือน" className="w-full bg-amber-500 text-slate-950 px-4 py-2.5 shadow-sm flex items-center justify-center gap-2 text-center text-xs md:text-sm font-semibold tracking-wide border-b border-amber-600/30">
+        <Megaphone className="w-4 h-4 shrink-0 text-slate-950" />
+        <span>ประกาศ: ปิดปรับปรุงระบบชั่วคราว จนถึงเวลา 12:00 น. (เที่ยงวันนี้)</span>
+      </aside>
+
       {toast && (
         <div className="fixed top-4 right-4 z-[9999] animate-in fade-in slide-in-from-top-4 duration-300">
           <div className={`px-4 py-3 rounded-lg shadow-lg border flex items-center gap-3 ${
@@ -74,6 +80,21 @@ export default function App() {
             </div>
             
             <div className="p-8 bg-[#FDFDFF]">
+              {/* Maintenance Notice Card */}
+              <div className="mb-6 p-4 bg-amber-50/90 border border-amber-200 rounded-xl flex items-start gap-3 text-amber-950 shadow-sm">
+                <div className="p-1.5 bg-amber-200/70 rounded-lg text-amber-800 shrink-0 mt-0.5">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-amber-900 flex items-center gap-1.5">
+                    ประกาศปิดปรับปรุงระบบ
+                  </h2>
+                  <p className="text-xs text-amber-800/95 mt-1 leading-relaxed">
+                    ระบบอยู่ระหว่างการปรับปรุงข้อมูลและบำรุงรักษา จะเปิดให้เข้าทำแบบทดสอบได้ตามปกติในเวลา <strong>12:00 น. (เที่ยงวันนี้)</strong> ขออภัยในความไม่สะดวก
+                  </p>
+                </div>
+              </div>
+
               <div className="mb-6 space-y-3">
                 <p className="text-sm font-medium text-slate-600">แบบทดสอบนี้จะช่วยให้นักเรียนค้นพบ:</p>
                 <ul className="text-xs text-slate-500 space-y-2 font-medium">
