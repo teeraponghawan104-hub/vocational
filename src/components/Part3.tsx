@@ -69,7 +69,7 @@ export default function Part3({ initialAnswers = [], onChange, onComplete }: Pro
     }
   };
 
-  const isComplete = shuffledQuestions.every(q => answers[q.id] !== undefined);
+  const isComplete = shuffledQuestions.every(q => answers[q.id] !== undefined && answers[q.id] !== null);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 flex flex-col h-full">
@@ -153,7 +153,7 @@ export default function Part3({ initialAnswers = [], onChange, onComplete }: Pro
               : "bg-slate-100 text-slate-400 cursor-not-allowed"
           )}
         >
-          {isComplete ? "ส่งคำตอบแบบทดสอบ" : `กรุณาตอบให้ครบทุกข้อ (${Object.keys(answers).length} / 54)`}
+          {isComplete ? "ส่งคำตอบแบบทดสอบ" : `กรุณาตอบให้ครบทุกข้อ (${Object.values(answers).filter(v => v !== null).length} / 54)`}
           {isComplete && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>}
         </button>
       </div>

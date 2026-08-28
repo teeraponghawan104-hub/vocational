@@ -255,7 +255,7 @@ export default function StudentForm({ onSubmit, onViewResult }: Props) {
                 <option
                   key={s.studentId}
                   value={s.studentId}
-                  disabled={isLocked}
+                  disabled={isLocked && !isCompleted}
                   className={isCompleted ? 'text-emerald-700 bg-emerald-50/80 font-medium' : isLocked ? 'text-amber-600 bg-amber-50' : 'text-slate-900'}
                 >
                   {label}

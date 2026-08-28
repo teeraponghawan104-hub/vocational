@@ -104,7 +104,7 @@ export default function Part2({ initialAnswers = [], onChange, onComplete }: Pro
                           currentAns === 'A' 
                             ? "bg-emerald-600 border-emerald-600 text-white shadow-md shadow-emerald-200/50 scale-[1.02] cursor-pointer" 
                             : usedA 
-                            ? "border-slate-200 text-slate-300 bg-slate-50 opacity-60 cursor-not-allowed" 
+                            ? "border-slate-200 text-slate-400 bg-slate-50 cursor-pointer" 
                             : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:bg-emerald-50/40 active:scale-[0.98] cursor-pointer"
                         )}
                       >
@@ -119,7 +119,7 @@ export default function Part2({ initialAnswers = [], onChange, onComplete }: Pro
                           currentAns === 'B' 
                             ? "bg-amber-600 border-amber-600 text-white shadow-md shadow-amber-200/50 scale-[1.02] cursor-pointer" 
                             : usedB 
-                            ? "border-slate-200 text-slate-300 bg-slate-50 opacity-60 cursor-not-allowed" 
+                            ? "border-slate-200 text-slate-400 bg-slate-50 cursor-pointer" 
                             : "border-slate-200 bg-white text-slate-700 hover:border-amber-300 hover:bg-amber-50/40 active:scale-[0.98] cursor-pointer"
                         )}
                       >
@@ -134,7 +134,7 @@ export default function Part2({ initialAnswers = [], onChange, onComplete }: Pro
                           currentAns === 'X' 
                             ? "bg-slate-800 border-slate-800 text-white shadow-md shadow-slate-300/50 scale-[1.02] cursor-pointer" 
                             : usedX 
-                            ? "border-slate-200 text-slate-300 bg-slate-50 opacity-60 cursor-not-allowed" 
+                            ? "border-slate-200 text-slate-400 bg-slate-50 cursor-pointer" 
                             : "border-slate-200 bg-white text-slate-700 hover:border-slate-400 hover:bg-slate-100/60 active:scale-[0.98] cursor-pointer"
                         )}
                       >
