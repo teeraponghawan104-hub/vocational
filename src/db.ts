@@ -128,7 +128,6 @@ export const saveAssessment = async (result: AssessmentResult): Promise<void> =>
     } catch (e) {}
   } catch (err: any) {
     console.warn("Notice saving assessment to Firebase:", err?.message || err);
-    throw err;
   }
 };
 
