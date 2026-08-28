@@ -5,7 +5,7 @@ import AssessmentLockdown from './components/AssessmentLockdown';
 import ResultDashboard from './components/ResultDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
 import InstallPwaPrompt, { InstallAppButton } from './components/InstallPwaPrompt';
-import { LogIn, Users, AlertTriangle, Megaphone, Clock } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 export default function App() {
   const [step, setStep] = useState<'login' | 'assessment' | 'result' | 'teacher'>('login');
@@ -35,12 +35,6 @@ export default function App() {
     <div className="min-h-[100dvh] bg-slate-50 text-slate-900 font-sans flex flex-col relative pb-safe">
       {/* PWA Install Notification & Modal */}
       <InstallPwaPrompt />
-
-      {/* Maintenance Announcement Top Bar */}
-      <aside aria-label="แถบประกาศแจ้งเตือน" className="w-full bg-amber-500 text-slate-950 px-3 py-2 sm:px-4 sm:py-2.5 shadow-sm flex items-center justify-center gap-2 text-center text-xs md:text-sm font-semibold tracking-wide border-b border-amber-600/30">
-        <Megaphone className="w-4 h-4 shrink-0 text-slate-950" />
-        <span className="leading-snug">ประกาศ: ปิดปรับปรุงระบบชั่วคราว จนถึงเวลา 12:00 น. (เที่ยงวันนี้)</span>
-      </aside>
 
       {toast && (
         <div className="fixed top-4 right-4 z-[9999] max-w-[calc(100vw-2rem)] animate-in fade-in slide-in-from-top-4 duration-300">
@@ -84,21 +78,6 @@ export default function App() {
             </div>
             
             <div className="p-4 sm:p-6 md:p-8 bg-[#FDFDFF]">
-              {/* Maintenance Notice Card */}
-              <div className="mb-5 sm:mb-6 p-3.5 sm:p-4 bg-amber-50/90 border border-amber-200 rounded-xl flex items-start gap-2.5 sm:gap-3 text-amber-950 shadow-xs">
-                <div className="p-1.5 bg-amber-200/70 rounded-lg text-amber-800 shrink-0 mt-0.5">
-                  <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h2 className="text-xs sm:text-sm font-bold text-amber-900 flex items-center gap-1.5">
-                    ประกาศปิดปรับปรุงระบบ
-                  </h2>
-                  <p className="text-[11px] sm:text-xs text-amber-800/95 mt-1 leading-relaxed break-words">
-                    ระบบอยู่ระหว่างการปรับปรุงข้อมูลและบำรุงรักษา จะเปิดให้เข้าทำแบบทดสอบได้ตามปกติในเวลา <strong>12:00 น. (เที่ยงวันนี้)</strong> ขออภัยในความไม่สะดวก
-                  </p>
-                </div>
-              </div>
-
               <div className="mb-5 sm:mb-6 space-y-2.5 sm:space-y-3">
                 <p className="text-xs sm:text-sm font-medium text-slate-600">แบบทดสอบนี้จะช่วยให้นักเรียนค้นพบ:</p>
                 <ul className="text-xs text-slate-500 space-y-2 font-medium">

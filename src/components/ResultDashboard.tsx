@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AssessmentResult } from '../types';
 import { getCareerRecommendations, riasecInterpretations, dptInterpretations } from '../data';
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { toPng } from 'html-to-image';
-import { jsPDF } from 'jspdf';
-import { CheckCircle2, User, RefreshCw, BookOpen, Briefcase, GraduationCap, Printer, Download } from 'lucide-react';
+import { CheckCircle2, User, RefreshCw, BookOpen, Briefcase, GraduationCap, Download } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface Props {
@@ -30,7 +29,6 @@ const DPT_LABELS: Record<string, string> = {
 
 export default function ResultDashboard({ result, onRestart, isTeacherView }: Props) {
   const { student, part1Score, part2Score, part3ConsistencyPercentage } = result;
-  const [showPrintWarning, setShowPrintWarning] = useState(false);
 
   const riasecData = Object.entries(part1Score).map(([key, value]) => ({
     subject: key,
@@ -60,102 +58,6 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
   const sortedDpt = Object.entries(part2Score).sort((a, b) => (b[1] as number) - (a[1] as number));
   const highestDptKey = sortedDpt[0][0];
   const dominantDpt = dptInterpretations[highestDptKey];
-
-  const handlePrint = () => {
-    if (window.self !== window.top) {
-      setShowPrintWarning(true);
-    } else {
-      window.print();
-    }
-  };
-
-  const handleDownloadPdf = async () => {
-    const element = document.getElementById('printable-student-report');
-    if (!element) return;
-    
-    const originalHeight = element.style.height;
-    const originalOverflow = element.style.overflow;
-    const originalWidth = element.style.width;
-    const originalMaxWidth = element.style.maxWidth;
-    const originalPadding = element.style.padding;
-    const originalMargin = element.style.margin;
-    
-    // Set standard rendering width suitable for A4 aspect ratio (800px)
-    element.style.height = 'auto';
-    element.style.overflow = 'visible';
-    element.style.width = '800px';
-    element.style.maxWidth = '800px';
-    element.style.padding = '16px';
-    element.style.margin = '0 auto';
-    
-    window.dispatchEvent(new Event('resize'));
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
-    try {
-      const dataUrl = await toPng(element, { 
-        quality: 1, 
-        backgroundColor: '#FFFFFF',
-        pixelRatio: 2,
-        skipFonts: true,
-        fontEmbedCSS: '',
-        style: { transform: 'scale(1)', transformOrigin: 'top left', width: '800px' },
-        filter: (node: any) => {
-          if (node.hasAttribute && node.hasAttribute('data-hide-print')) return false;
-          if (node.classList && typeof node.classList.contains === 'function' && node.classList.contains('print:hidden')) return false;
-          return true;
-        }
-      });
-
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pdfPageWidth = 210;
-      const pdfPageHeight = 297;
-      
-      const img = new Image();
-      img.src = dataUrl;
-      await new Promise((resolve) => {
-        img.onload = resolve;
-      });
-
-      // Calculate image aspect ratio
-      const imgAspect = img.height / img.width;
-
-      // Fit with standard 8mm margin
-      const margin = 8;
-      const maxAvailableWidth = pdfPageWidth - (margin * 2); // 194mm
-      const maxAvailableHeight = pdfPageHeight - (margin * 2); // 281mm
-
-      let renderWidth = maxAvailableWidth;
-      let renderHeight = renderWidth * imgAspect;
-
-      // If render height exceeds page budget, scale down so it fits perfectly on ONE single A4 page
-      if (renderHeight > maxAvailableHeight) {
-        renderHeight = maxAvailableHeight;
-        renderWidth = renderHeight / imgAspect;
-      }
-
-      // Center horizontally and vertically within A4 page
-      const xOffset = (pdfPageWidth - renderWidth) / 2;
-      const yOffset = (pdfPageHeight - renderHeight) / 2;
-
-      pdf.addImage(dataUrl, 'PNG', xOffset, yOffset, renderWidth, renderHeight, undefined, 'FAST');
-      pdf.save(`ผลการทดสอบ_${student.firstName}_${student.lastName}.pdf`);
-    } catch (err) {
-      console.error('Error generating PDF', err);
-      alert('เกิดข้อผิดพลาดในการสร้าง PDF');
-    } finally {
-      element.style.height = originalHeight;
-      element.style.overflow = originalOverflow;
-      element.style.width = originalWidth;
-      element.style.maxWidth = originalMaxWidth;
-      element.style.padding = originalPadding;
-      element.style.margin = originalMargin;
-    }
-  };
 
   const handleSaveImage = async () => {
     const element = document.getElementById('printable-student-report');
@@ -212,37 +114,6 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
 
   return (
     <div className="flex flex-col min-h-[100dvh] print:h-auto print:overflow-visible w-full bg-[#FDFDFF] text-slate-900 overflow-y-auto font-sans pb-safe" id="pdf-content">
-      {/* Print Warning Modal */}
-      {showPrintWarning && (
-        <div className="fixed inset-0 bg-slate-900/50 flex items-center justify-center z-50 p-4 print:hidden" style={{ zIndex: 9999 }}>
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-xl font-bold text-slate-900 mb-2">โหมดพรีวิว</h3>
-            <p className="text-slate-600 mb-6 text-sm md:text-base leading-relaxed">
-              คุณกำลังใช้งานในโหมดพรีวิว ฟังก์ชันพิมพ์รายงานและบันทึกเป็น PDF จะทำงานได้ดีที่สุดเมื่อเปิดแอปในหน้าต่างใหม่
-              <br/><br/>
-              กรุณาคลิกปุ่ม <b className="text-slate-800">"Open in New Tab"</b> (ไอคอนลูกศร ↗️ ที่มุมขวาบนของหน้าจอพรีวิวนี้) เพื่อเปิดแอปแบบเต็มจอแล้วกดพิมพ์อีกครั้ง
-            </p>
-            <div className="flex justify-end gap-3">
-              <button 
-                onClick={() => {
-                  setShowPrintWarning(false);
-                  setTimeout(() => window.print(), 100);
-                }}
-                className="px-4 py-2 text-slate-500 font-medium hover:bg-slate-100 rounded-lg transition-colors text-sm"
-              >
-                พิมพ์ในหน้านี้
-              </button>
-              <button 
-                onClick={() => setShowPrintWarning(false)}
-                className="px-4 py-2 bg-indigo-600 text-white font-medium hover:bg-indigo-700 rounded-lg transition-colors shadow-sm text-sm"
-              >
-                เข้าใจแล้ว
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Screen Header */}
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-3 md:px-8 shrink-0 shadow-sm z-10 sticky top-0 print:hidden" data-hide-print="true">
         <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0 pr-2">
@@ -259,22 +130,6 @@ export default function ResultDashboard({ result, onRestart, isTeacherView }: Pr
           >
             <Download size={15} className="shrink-0" />
             <span className="hidden md:inline">บันทึกรูปภาพ</span>
-          </button>
-          <button
-            onClick={handleDownloadPdf}
-            className="inline-flex items-center justify-center gap-1.5 bg-indigo-50 text-indigo-700 border border-indigo-200 px-2.5 py-1.5 md:px-3 md:py-1.5 rounded-lg hover:bg-indigo-100 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0"
-            title="ดาวน์โหลดไฟล์ PDF A4"
-          >
-            <Download size={15} className="shrink-0" />
-            <span className="hidden md:inline">ดาวน์โหลด PDF</span>
-          </button>
-          <button
-            onClick={handlePrint}
-            className="inline-flex items-center justify-center gap-1.5 bg-indigo-600 text-white border border-transparent px-2.5 py-1.5 md:px-3.5 md:py-1.5 rounded-lg hover:bg-indigo-700 font-semibold text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 shadow-xs"
-            title="พิมพ์รายงาน A4"
-          >
-            <Printer size={15} className="shrink-0" />
-            <span>พิมพ์ / PDF</span>
           </button>
           {isTeacherView ? (
             <button 
