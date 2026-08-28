@@ -4,6 +4,7 @@ import StudentForm from './components/StudentForm';
 import AssessmentLockdown from './components/AssessmentLockdown';
 import ResultDashboard from './components/ResultDashboard';
 import TeacherDashboard from './components/TeacherDashboard';
+import InstallPwaPrompt, { InstallAppButton } from './components/InstallPwaPrompt';
 import { LogIn, Users, AlertTriangle, Megaphone, Clock } from 'lucide-react';
 
 export default function App() {
@@ -32,6 +33,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col relative">
+      {/* PWA Install Notification & Modal */}
+      <InstallPwaPrompt />
+
       {/* Maintenance Announcement Top Bar */}
       <aside aria-label="แถบประกาศแจ้งเตือน" className="w-full bg-amber-500 text-slate-950 px-4 py-2.5 shadow-sm flex items-center justify-center gap-2 text-center text-xs md:text-sm font-semibold tracking-wide border-b border-amber-600/30">
         <Megaphone className="w-4 h-4 shrink-0 text-slate-950" />
@@ -148,13 +152,16 @@ export default function App() {
                   </div>
                 </div>
               ) : (
-                <button
-                  onClick={() => setShowTeacherLogin(true)}
-                  className="text-xs text-slate-500 hover:text-indigo-600 font-bold uppercase tracking-widest inline-flex items-center gap-2 transition-colors"
-                >
-                  <Users size={14} />
-                  สำหรับครูผู้สอน
-                </button>
+                <div className="flex items-center justify-between gap-3 px-2">
+                  <button
+                    onClick={() => setShowTeacherLogin(true)}
+                    className="text-xs text-slate-500 hover:text-indigo-600 font-bold uppercase tracking-widest inline-flex items-center gap-1.5 transition-colors"
+                  >
+                    <Users size={14} />
+                    สำหรับครูผู้สอน
+                  </button>
+                  <InstallAppButton />
+                </div>
               )}
             </div>
           </div>

@@ -1,0 +1,37 @@
+{
+  "name": "แบบทดสอบความพร้อมทางอาชีพ",
+  "short_name": "ความพร้อมอาชีพ",
+  "description": "แบบทดสอบวัดความสนใจทางอาชีพ ความถนัด และความมั่นใจในตนเอง",
+  "start_url": "/",
+  "id": "/",
+  "display": "standalone",
+  "background_color": "#f8fafc",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "th",
+  "icons": [
+    {
+      "src": "/school-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/school-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/school-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "education",
+    "productivity"
+  ]
+}
