@@ -169,7 +169,7 @@ export default function AssessmentLockdown({ student, onComplete, onCancel, onLo
   };
 
   return (
-    <div className="flex flex-col h-screen w-full bg-slate-50 text-slate-900 overflow-hidden font-sans">
+    <div className="flex flex-col h-[100dvh] w-full bg-slate-50 text-slate-900 overflow-hidden font-sans">
       {/* Top Navigation / Status Bar */}
       <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 md:px-8 shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-2 md:gap-3">

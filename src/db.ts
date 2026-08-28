@@ -1,145 +1,147 @@
 import { AssessmentResult } from './types';
 import { normalizeName } from './studentData';
+import { createClient } from '@supabase/supabase-js';
 
-const CACHE_KEY = 'voca_assess_cache';
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+
+// Create Supabase client
+export const supabase = (supabaseUrl && supabaseAnonKey) 
+  ? createClient(supabaseUrl, supabaseAnonKey) 
+  : null;
 
 export const syncOfflineData = async () => {
-  try {
-    const cachedRaw = localStorage.getItem(CACHE_KEY);
-    if (!cachedRaw) return;
-    const cached: AssessmentResult[] = JSON.parse(cachedRaw);
-    if (cached.length === 0) return;
-    
-    let remaining: AssessmentResult[] = [];
-    for (const result of cached) {
-      try {
-        const res = await fetch(API_BASE_URL + '/api/assessments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(result)
-        });
-        if (!res.ok) {
-          remaining.push(result);
-        }
-      } catch (e) {
-        remaining.push(result);
-      }
-    }
-    localStorage.setItem(CACHE_KEY, JSON.stringify(remaining));
-  } catch (e) {}
+  // Cloud native sync handle
 };
 
-// Try to auto-sync when the module loads
-if (typeof window !== 'undefined') {
-  setTimeout(syncOfflineData, 2000);
-}
-
 export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
-  callback([]);
-  return () => {};
+  if (!supabase) return () => {};
+  
+  const fetchLocks = async () => {
+    const { data } = await supabase.from('locks').select('*');
+    const now = Date.now();
+    const locks = (data || []).filter((l: any) => now - l.updated_at < 600000).map((l: any) => l.student_id);
+    callback(locks);
+  };
+  
+  fetchLocks();
+  
+  const channel = supabase
+    .channel('locks_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'locks' }, () => {
+      fetchLocks();
+    })
+    .subscribe();
+    
+  return () => {
+    supabase.removeChannel(channel);
+  };
 };
 
 export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
-  return true;
+  if (!supabase) return true;
+  try {
+    const { data } = await supabase.from('locks').select('*').eq('student_id', studentId).single();
+    const now = Date.now();
+    
+    if (data) {
+      if (data.session_id !== sessionId && now - data.updated_at < 600000) {
+        return false; // locked by someone else
+      }
+    }
+    
+    await supabase.from('locks').upsert({ student_id: studentId, session_id: sessionId, updated_at: now });
+    return true;
+  } catch (e) {
+    return true; // fail open
+  }
 };
 
-export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {};
-export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {};
-export const forceReleaseLock = async (studentId: string): Promise<void> => {};
+export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
+  if (!supabase) return;
+  try {
+    await supabase.from('locks').upsert({ student_id: studentId, session_id: sessionId, updated_at: Date.now() });
+  } catch (e) {}
+};
+
+export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
+  if (!supabase) return;
+  try {
+    const { data } = await supabase.from('locks').select('*').eq('student_id', studentId).single();
+    if (data && data.session_id === sessionId) {
+      await supabase.from('locks').delete().eq('student_id', studentId);
+    }
+  } catch (e) {}
+};
+
+export const forceReleaseLock = async (studentId: string): Promise<void> => {
+  if (!supabase) return;
+  try {
+    await supabase.from('locks').delete().eq('student_id', studentId);
+  } catch (e) {}
+};
 
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
-  let savedOk = false;
-  
-  // Try sending to server with up to 3 attempts
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      const res = await fetch(API_BASE_URL + '/api/assessments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(result)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.id) result.id = data.id;
-        savedOk = true;
-        break;
-      }
-    } catch (err: any) {
-      console.warn(`Attempt ${attempt} saving assessment failed:`, err?.message || err);
-      await new Promise(r => setTimeout(r, 800));
-    }
-  }
-
-  // Backup to localStorage
+  if (!supabase) throw new Error("Supabase is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY.");
   try {
-    const cachedRaw = localStorage.getItem(CACHE_KEY);
-    const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
-    const filtered = cached.filter(a => a.id !== result.id);
-    filtered.push(result);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(filtered));
-  } catch (e) {}
-
-  if (!savedOk) {
-    console.error("Critical: failed to reach /api/assessments after 3 attempts");
+    const { error } = await supabase.from('assessments').upsert({ 
+      id: result.id, 
+      data: result 
+    });
+    if (error) throw error;
+  } catch (e) {
+    console.error("Failed to save to Supabase:", e);
     throw new Error("Cannot save to server. Data is only saved on this device.");
   }
 };
 
 export const getAssessments = async (): Promise<AssessmentResult[]> => {
+  if (!supabase) return [];
   try {
-    const res = await fetch(API_BASE_URL + '/api/assessments?t=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to fetch');
-    const remoteAssessments: AssessmentResult[] = await res.json();
-    return remoteAssessments;
-  } catch (err: any) {
-    console.warn("Notice fetching assessments:", err?.message || err);
-    try {
-      const cachedRaw = localStorage.getItem(CACHE_KEY);
-      return cachedRaw ? JSON.parse(cachedRaw) : [];
-    } catch (e) {
-      return [];
-    }
+    const { data, error } = await supabase.from('assessments').select('data').order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map((row: any) => row.data as AssessmentResult);
+  } catch (err) {
+    console.warn("Notice fetching assessments:", err);
+    return [];
   }
 };
 
 export const subscribeToAssessments = (callback: (assessments: AssessmentResult[], error?: string) => void): (() => void) => {
-  let isMounted = true;
-  let intervalId: any;
+  if (!supabase) {
+    callback([], "Supabase is not configured.");
+    return () => {};
+  }
   
-  const fetchAndCallback = async () => {
+  const fetchAll = async () => {
     try {
-      const res = await fetch(API_BASE_URL + '/api/assessments?t=' + Date.now(), { cache: 'no-store' });
-      if (res.ok && isMounted) {
-        const remoteAssessments: AssessmentResult[] = await res.json();
-        callback(remoteAssessments);
+      const { data } = await supabase.from('assessments').select('data').order('created_at', { ascending: false });
+      if (data) {
+        callback(data.map((row: any) => row.data as AssessmentResult));
       }
     } catch (e) {}
   };
-
-  fetchAndCallback();
-  intervalId = setInterval(fetchAndCallback, 2500);
-
+  
+  fetchAll();
+  
+  const channel = supabase
+    .channel('assessments_changes')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => {
+      fetchAll();
+    })
+    .subscribe();
+    
   return () => {
-    isMounted = false;
-    clearInterval(intervalId);
+    supabase.removeChannel(channel);
   };
 };
 
 export const deleteAssessment = async (id: string): Promise<void> => {
+  if (!supabase) return;
   try {
-    const cachedRaw = localStorage.getItem(CACHE_KEY);
-    if (cachedRaw) {
-      const cached: AssessmentResult[] = JSON.parse(cachedRaw);
-      const updated = cached.filter(a => a.id !== id);
-      localStorage.setItem(CACHE_KEY, JSON.stringify(updated));
-    }
-  } catch (e) {}
-
-  try {
-    await fetch(`/api/assessments/${id}`, { method: 'DELETE' });
-  } catch (err: any) {
-    console.error("Notice deleting assessment:", err?.message || err);
+    await supabase.from('assessments').delete().eq('id', id);
+  } catch (err) {
+    console.error("Error deleting assessment:", err);
   }
 };
 
@@ -169,9 +171,9 @@ export const checkStudentEligibilityRealTime = async (
         };
       }
     }
+
     return { canStart: true };
   } catch (err) {
     return { canStart: true };
   }
 };
-
