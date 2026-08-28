@@ -25,44 +25,6 @@ export default function TeacherDashboard({ onBack }: Props) {
   const [deletePassword, setDeletePassword] = useState('');
   const [showPrintWarning, setShowPrintWarning] = useState(false);
 
-  const handleImportData = () => {
-    const code = prompt('วางรหัสข้อมูลที่นักเรียนส่งมาให้ในช่องด้านล่างนี้:');
-    if (code) {
-      try {
-        const decoded = decodeURIComponent(atob(code));
-        const importedResult = JSON.parse(decoded) as AssessmentResult;
-        
-        if (!importedResult || !importedResult.id || !importedResult.student) {
-          throw new Error("Invalid format");
-        }
-
-        // Just update local cache first
-        const cacheKey = 'voca_assess_cache';
-        const cachedRaw = localStorage.getItem(cacheKey);
-        const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
-        
-        // Remove old if exists
-        const filtered = cached.filter(a => a.id !== importedResult.id);
-        filtered.push(importedResult);
-        localStorage.setItem(cacheKey, JSON.stringify(filtered));
-
-        // Attempt remote save silently (will likely fail if quota exceeded)
-        import('../db').then(({ saveAssessment }) => {
-          saveAssessment(importedResult).catch(() => {});
-        });
-
-        setResults(prev => {
-          const others = prev.filter(a => a.id !== importedResult.id);
-          return [importedResult, ...others].sort((a, b) => b.timestamp - a.timestamp);
-        });
-
-        alert(`นำเข้าข้อมูลของ ${importedResult.student.firstName} ${importedResult.student.lastName} สำเร็จแล้ว!`);
-      } catch (e) {
-        alert('รหัสข้อมูลไม่ถูกต้องหรือเสียหาย กรุณาลองใหม่อีกครั้ง');
-      }
-    }
-  };
-
   useEffect(() => {
     setLoading(true);
     const unsubscribe = subscribeToAssessments((data, err) => {
@@ -372,10 +334,6 @@ export default function TeacherDashboard({ onBack }: Props) {
         </div>
         <div className="flex items-center justify-between md:justify-end w-full md:w-auto gap-2" data-hide-print="true">
           <div className="flex gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
-            <button onClick={handleImportData} className="flex items-center justify-center gap-1.5 bg-amber-50 text-amber-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-amber-200 hover:bg-amber-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0">
-              <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
-              <span>นำเข้าข้อมูล</span>
-            </button>
             <button onClick={handleDownloadPdf} className="flex items-center justify-center gap-1.5 bg-slate-50 text-slate-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-slate-200 hover:bg-slate-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0">
               <Printer size={14} className="shrink-0" />
               <span>พิมพ์ / PDF</span>
