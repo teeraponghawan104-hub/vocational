@@ -1,11 +1,9 @@
 import { AssessmentResult } from './types';
 import { normalizeName } from './studentData';
 import { firestore } from './firebase';
-import { collection, doc, setDoc, getDocs, getDoc, deleteDoc, onSnapshot, query, orderBy, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, getDocs, deleteDoc, onSnapshot, query, orderBy, getDoc } from 'firebase/firestore';
 
-export const syncOfflineData = async () => {
-  // Firebase handles offline syncing automatically!
-};
+export const syncOfflineData = async () => {};
 
 export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
   const q = query(collection(firestore, 'locks'));
@@ -14,7 +12,6 @@ export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void)
     const locks: string[] = [];
     snapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      // Locks expire after 10 minutes (600,000 ms) of inactivity
       if (now - data.timestamp < 600000) {
         locks.push(docSnap.id);
       }
@@ -33,15 +30,14 @@ export const acquireLock = async (studentId: string, sessionId: string): Promise
     if (lockSnap.exists()) {
       const data = lockSnap.data();
       if (data.sessionId !== sessionId && now - data.timestamp < 600000) {
-        return false; // locked by someone else
+        return false;
       }
     }
     
     await setDoc(lockRef, { sessionId, timestamp: now });
     return true;
   } catch (e) {
-    console.error("Lock error:", e);
-    return true; // fail open so students aren't blocked by db errors
+    return true;
   }
 };
 
@@ -70,7 +66,6 @@ export const forceReleaseLock = async (studentId: string): Promise<void> => {
 
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
   try {
-    // Save to Firebase with a timeout
     const docRef = doc(firestore, 'assessments', result.id);
     const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
     
@@ -80,8 +75,6 @@ export const saveAssessment = async (result: AssessmentResult): Promise<void> =>
     ]);
   } catch (e) {
     console.error("Failed to save to Firebase:", e);
-    
-    // Backup to localStorage
     try {
       const CACHE_KEY = 'voca_assess_cache';
       const cachedRaw = localStorage.getItem(CACHE_KEY);
@@ -106,7 +99,6 @@ export const getAssessments = async (): Promise<AssessmentResult[]> => {
     });
     return assessments;
   } catch (err) {
-    console.warn("Notice fetching assessments:", err);
     return [];
   }
 };
@@ -128,9 +120,7 @@ export const subscribeToAssessments = (callback: (assessments: AssessmentResult[
 export const deleteAssessment = async (id: string): Promise<void> => {
   try {
     await deleteDoc(doc(firestore, 'assessments', id));
-  } catch (err) {
-    console.error("Error deleting assessment:", err);
-  }
+  } catch (err) {}
 };
 
 export const checkStudentEligibilityRealTime = async (
