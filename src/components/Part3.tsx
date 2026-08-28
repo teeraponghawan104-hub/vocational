@@ -6,7 +6,7 @@ import { cn } from '../lib/utils';
 interface Props {
   initialAnswers?: Part1Answer[];
   onChange?: (answers: Part1Answer[]) => void;
-  onComplete: (answers: Part1Answer[]) => void;
+  onComplete: (answers: Part1Answer[]) => Promise<void> | void;
 }
 
 const gradients = [
@@ -44,6 +44,8 @@ const QuestionMedia = ({ q, index }: { q: any, index: number }) => {
 };
 
 export default function Part3({ initialAnswers = [], onChange, onComplete }: Props) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Shuffle questions only once on mount
   const shuffledQuestions = useMemo(() => {
     return [...part1Questions].sort(() => Math.random() - 0.5);
@@ -138,23 +140,25 @@ export default function Part3({ initialAnswers = [], onChange, onComplete }: Pro
 
       <div className="pt-6 border-t border-slate-200 shrink-0">
         <button
-          disabled={!isComplete}
-          onClick={() => {
+          disabled={!isComplete || isSubmitting}
+          onClick={async () => {
+            setIsSubmitting(true);
             const formatted = shuffledQuestions.map(q => ({
               questionId: q.id,
               choice: answers[q.id]
             }));
-            onComplete(formatted);
+            await onComplete(formatted);
+            setIsSubmitting(false);
           }}
           className={cn(
             "w-full flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold text-sm transition-shadow",
-            isComplete 
+            isComplete && !isSubmitting
               ? "bg-slate-800 text-white hover:bg-slate-900 shadow-sm" 
               : "bg-slate-100 text-slate-400 cursor-not-allowed"
           )}
         >
-          {isComplete ? "ส่งคำตอบแบบทดสอบ" : `กรุณาตอบให้ครบทุกข้อ (${Object.values(answers).filter(v => v !== null).length} / 54)`}
-          {isComplete && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>}
+          {isSubmitting ? "กำลังส่งคำตอบ..." : (isComplete ? "ส่งคำตอบแบบทดสอบ" : `กรุณาตอบให้ครบทุกข้อ (${Object.values(answers).filter(v => v !== null).length} / 54)`)}
+          {isComplete && !isSubmitting && <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>}
         </button>
       </div>
     </div>

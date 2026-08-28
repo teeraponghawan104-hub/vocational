@@ -70,12 +70,29 @@ export const forceReleaseLock = async (studentId: string): Promise<void> => {
 
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
   try {
-    // Save to Firebase
+    // Save to Firebase with a timeout
     const docRef = doc(firestore, 'assessments', result.id);
-    await setDoc(docRef, result);
+    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
+    
+    await Promise.race([
+      setDoc(docRef, result),
+      timeoutPromise
+    ]);
   } catch (e) {
     console.error("Failed to save to Firebase:", e);
-    throw new Error("Cannot save to server. Data is only saved on this device.");
+    
+    // Backup to localStorage
+    try {
+      const CACHE_KEY = 'voca_assess_cache';
+      const cachedRaw = localStorage.getItem(CACHE_KEY);
+      const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
+      const filtered = cached.filter(a => a.id !== result.id);
+      filtered.push(result);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(filtered));
+      console.warn("Saved to offline cache instead of server.");
+    } catch (err) {
+      throw new Error("Cannot save to server. Data is only saved on this device.");
+    }
   }
 };
 

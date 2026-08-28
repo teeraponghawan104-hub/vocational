@@ -1,0 +1,36 @@
+--- src/db.ts
++++ src/db.ts
+@@ -69,11 +69,30 @@
+ };
+ 
+ export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
+   try {
+     // Save to Firebase
+     const docRef = doc(firestore, 'assessments', result.id);
+-    await setDoc(docRef, result);
++    
++    // Race between Firebase setDoc and a 5-second timeout
++    const timeoutPromise = new Promise((resolve, reject) => {
++      setTimeout(() => {
++        reject(new Error("Timeout: Firebase connection took too long."));
++      }, 5000);
++    });
++    
++    await Promise.race([
++      setDoc(docRef, result),
++      timeoutPromise
++    ]);
++    
+   } catch (e) {
+     console.error("Failed to save to Firebase:", e);
+-    throw new Error("Cannot save to server. Data is only saved on this device.");
++    // Fallback to localStorage
++    try {
++      const cachedRaw = localStorage.getItem('voca_assess_cache');
++      const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
++      cached.push(result);
++      localStorage.setItem('voca_assess_cache', JSON.stringify(cached));
++    } catch (err) {}
++    throw new Error("Cannot save to server.");
+   }
+ };
