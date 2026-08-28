@@ -37,9 +37,10 @@ export default function AssessmentLockdown({ student, onComplete, onCancel, onLo
       if (isMounted) {
         setLockStatus(success ? 'acquired' : 'denied');
         if (success) {
+          // Renew at most every 5 minutes if test is still open
           heartbeatInterval = setInterval(() => {
             renewLock(studentId, sessionIdRef.current);
-          }, 5000); // Renew every 5 seconds
+          }, 5 * 60 * 1000);
         } else {
           if (onLockedOut) onLockedOut();
         }
