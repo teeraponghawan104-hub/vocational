@@ -88,4 +88,8 @@ export const memoryDb = {
   forceReleaseLock: (studentId: string) => {
     delete inMemoryLocks[studentId];
   },
+  clearAll: () => {
+    inMemoryAssessments = {};
+    inMemoryLocks = {};
+  },
 };

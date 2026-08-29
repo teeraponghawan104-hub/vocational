@@ -82,7 +82,15 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'DELETE') {
-      const { studentId, sessionId, force } = req.query || {};
+      const { studentId, sessionId, force, all } = req.query || {};
+
+      if (all === 'true' || force === 'all') {
+        if (sql) {
+          await sql`DELETE FROM locks;`;
+        }
+        memoryDb.clearAll();
+        return res.status(200).json({ success: true, message: 'All locks cleared' });
+      }
 
       if (sql && studentId) {
         if (force === 'true') {

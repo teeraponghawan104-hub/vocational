@@ -52,7 +52,17 @@ export default async function handler(req: any, res: any) {
     }
 
     if (req.method === 'DELETE') {
-      const { id } = req.query || {};
+      const { id, deleteAll } = req.query || {};
+
+      if (deleteAll === 'true' || id === 'ALL') {
+        if (sql) {
+          await sql`DELETE FROM assessments;`;
+          await sql`DELETE FROM locks;`;
+        }
+        memoryDb.clearAll();
+        return res.status(200).json({ success: true, message: 'All assessments and locks reset successfully' });
+      }
+
       if (!id) {
         return res.status(400).json({ success: false, error: 'Missing ID' });
       }

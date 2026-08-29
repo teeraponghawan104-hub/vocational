@@ -189,6 +189,30 @@ export const deleteAssessment = async (id: string): Promise<void> => {
   }
 };
 
+export const resetAllAssessments = async (): Promise<void> => {
+  try {
+    // Clear all localStorage related to tests & autosaves
+    localStorage.removeItem(CACHE_KEY);
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && (key.startsWith('autosave-') || key.startsWith('voca_') || key.startsWith('assessment_'))) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((k) => localStorage.removeItem(k));
+
+    // Clear backend database & locks
+    await Promise.all([
+      fetch('/api/assessments?deleteAll=true', { method: 'DELETE' }),
+      fetch('/api/locks?all=true', { method: 'DELETE' }),
+    ]);
+  } catch (err) {
+    console.error('Error resetting all assessments:', err);
+    throw err;
+  }
+};
+
 export const checkStudentEligibilityRealTime = async (
   student: { room: string; studentNumber: string; fullName: string },
   _sessionId: string
