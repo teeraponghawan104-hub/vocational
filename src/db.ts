@@ -1,198 +1,108 @@
 import { AssessmentResult } from './types';
 import { normalizeName } from './studentData';
+import { db } from './firebase';
+import {
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  deleteDoc,
+  onSnapshot,
+  query,
+  writeBatch
+} from 'firebase/firestore';
 
-const CACHE_KEY = 'voca_assess_cache';
+const ASSESSMENTS_COLLECTION = 'assessments';
+const LOCKS_COLLECTION = 'locks';
 
-const getLocalCache = (): AssessmentResult[] => {
+// 1. Subscribe to Assessments (Real-time Cloud Sync)
+export const subscribeToAssessments = (
+  callback: (assessments: AssessmentResult[], error?: string) => void
+): (() => void) => {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
+    const q = collection(db, ASSESSMENTS_COLLECTION);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const results: AssessmentResult[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          if (data) {
+            results.push(data as AssessmentResult);
+          }
+        });
+        callback(results);
+      },
+      (error) => {
+        console.error('Error in Firestore snapshot:', error);
+        callback([], error.message);
+      }
+    );
+    return unsubscribe;
+  } catch (err: any) {
+    console.error('Failed to subscribe to assessments:', err);
+    return () => {};
+  }
+};
+
+// 2. Get All Assessments from Cloud
+export const getAssessments = async (): Promise<AssessmentResult[]> => {
+  try {
+    const querySnapshot = await getDocs(collection(db, ASSESSMENTS_COLLECTION));
+    const results: AssessmentResult[] = [];
+    querySnapshot.forEach((docSnap) => {
+      const data = docSnap.data();
+      if (data) {
+        results.push(data as AssessmentResult);
+      }
+    });
+    return results;
+  } catch (error) {
+    console.error('Error fetching assessments from Cloud Firestore:', error);
     return [];
   }
 };
 
-const saveToLocalCache = (result: AssessmentResult) => {
-  try {
-    const cached = getLocalCache();
-    const filtered = cached.filter((a) => a.id !== result.id);
-    filtered.push(result);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(filtered));
-  } catch (e) {}
-};
-
-export const syncOfflineData = async () => {
-  try {
-    const cached = getLocalCache();
-    if (cached.length === 0) return;
-
-    for (const item of cached) {
-      try {
-        await fetch('/api/assessments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(item),
-        });
-      } catch (e) {}
-    }
-  } catch (e) {}
-};
-
-export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
-  let isSubscribed = true;
-
-  const fetchLocks = async () => {
-    try {
-      const res = await fetch('/api/locks');
-      if (res.ok) {
-        const data = await res.json();
-        if (isSubscribed && Array.isArray(data.locks)) {
-          callback(data.locks);
-        }
-      }
-    } catch (e) {}
-  };
-
-  fetchLocks();
-  const interval = setInterval(fetchLocks, 4000);
-
-  return () => {
-    isSubscribed = false;
-    clearInterval(interval);
-  };
-};
-
-export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
-  try {
-    const res = await fetch('/api/locks', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentId, sessionId }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.acquired ?? true;
-    }
-    return true;
-  } catch (e) {
-    return true; // Fail-open
-  }
-};
-
-export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
-  try {
-    await fetch('/api/locks', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ studentId, sessionId }),
-    });
-  } catch (e) {}
-};
-
-export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
-  try {
-    await fetch(`/api/locks?studentId=${encodeURIComponent(studentId)}&sessionId=${encodeURIComponent(sessionId)}`, {
-      method: 'DELETE',
-    });
-  } catch (e) {}
-};
-
-export const forceReleaseLock = async (studentId: string): Promise<void> => {
-  try {
-    await fetch(`/api/locks?studentId=${encodeURIComponent(studentId)}&force=true`, {
-      method: 'DELETE',
-    });
-  } catch (e) {}
-};
-
+// 3. Save Assessment directly to Cloud
 export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
-  saveToLocalCache(result);
-
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 9000);
-
-    const res = await fetch('/api/assessments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(result),
-      signal: controller.signal,
-    });
-    clearTimeout(timeoutId);
-
-    if (!res.ok) {
-      const errData = await res.json().catch(() => ({}));
-      console.warn('API error saving assessment:', errData);
-    }
-  } catch (e) {
-    console.warn('Network error saving assessment, preserved in offline cache:', e);
+    const docRef = doc(db, ASSESSMENTS_COLLECTION, result.id);
+    await setDoc(docRef, result);
+  } catch (error) {
+    console.error('Error saving assessment to Cloud Firestore:', error);
+    throw error;
   }
 };
 
-export const getAssessments = async (): Promise<AssessmentResult[]> => {
-  try {
-    const res = await fetch('/api/assessments');
-    if (res.ok) {
-      const json = await res.json();
-      if (Array.isArray(json.data)) {
-        return json.data;
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to fetch from API, falling back to local cache:', e);
-  }
-  return getLocalCache();
-};
-
-export const subscribeToAssessments = (
-  callback: (assessments: AssessmentResult[], error?: string) => void
-): (() => void) => {
-  let isSubscribed = true;
-
-  const fetchAll = async () => {
-    try {
-      const res = await fetch('/api/assessments');
-      if (res.ok) {
-        const json = await res.json();
-        if (isSubscribed && Array.isArray(json.data)) {
-          callback(json.data);
-          return;
-        }
-      }
-    } catch (e) {
-      if (isSubscribed) {
-        callback(getLocalCache());
-      }
-    }
-  };
-
-  fetchAll();
-  const interval = setInterval(fetchAll, 3500);
-
-  return () => {
-    isSubscribed = false;
-    clearInterval(interval);
-  };
-};
-
+// 4. Delete Single Assessment
 export const deleteAssessment = async (id: string): Promise<void> => {
   try {
-    // Remove from local cache
-    const cached = getLocalCache().filter((a) => a.id !== id);
-    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
-
-    await fetch(`/api/assessments?id=${encodeURIComponent(id)}`, {
-      method: 'DELETE',
-    });
+    await deleteDoc(doc(db, ASSESSMENTS_COLLECTION, id));
   } catch (err) {
-    console.error('Error deleting assessment:', err);
+    console.error('Error deleting assessment from Cloud Firestore:', err);
+    throw err;
   }
 };
 
+// 5. Reset All Assessments (Clear Cloud DB & Local Storage)
 export const resetAllAssessments = async (): Promise<void> => {
   try {
-    // Clear all localStorage related to tests & autosaves
-    localStorage.removeItem(CACHE_KEY);
+    // 1. Delete all assessments in Firestore
+    const assessSnap = await getDocs(collection(db, ASSESSMENTS_COLLECTION));
+    const batch = writeBatch(db);
+    assessSnap.forEach((docSnap) => {
+      batch.delete(docSnap.ref);
+    });
+
+    // 2. Delete all locks in Firestore
+    const locksSnap = await getDocs(collection(db, LOCKS_COLLECTION));
+    locksSnap.forEach((docSnap) => {
+      batch.delete(docSnap.ref);
+    });
+
+    await batch.commit();
+
+    // 3. Clean up localStorage
     const keysToRemove: string[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
@@ -201,18 +111,73 @@ export const resetAllAssessments = async (): Promise<void> => {
       }
     }
     keysToRemove.forEach((k) => localStorage.removeItem(k));
-
-    // Clear backend database & locks
-    await Promise.all([
-      fetch('/api/assessments?deleteAll=true', { method: 'DELETE' }),
-      fetch('/api/locks?all=true', { method: 'DELETE' }),
-    ]);
   } catch (err) {
-    console.error('Error resetting all assessments:', err);
+    console.error('Error resetting all assessments in Cloud Firestore:', err);
     throw err;
   }
 };
 
+// 6. Real-time Locks Management
+export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
+  try {
+    const q = collection(db, LOCKS_COLLECTION);
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const now = Date.now();
+        const activeLocks: string[] = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          // Lock expires after 10 minutes
+          if (data && now - (data.updatedAt || 0) < 600000) {
+            activeLocks.push(docSnap.id);
+          }
+        });
+        callback(activeLocks);
+      },
+      (error) => {
+        console.warn('Error in locks snapshot:', error);
+      }
+    );
+    return unsubscribe;
+  } catch (e) {
+    return () => {};
+  }
+};
+
+export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    const now = Date.now();
+    await setDoc(lockRef, { sessionId, updatedAt: now });
+    return true;
+  } catch (e) {
+    return true; // Fail-open
+  }
+};
+
+export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    await setDoc(lockRef, { sessionId, updatedAt: Date.now() }, { merge: true });
+  } catch (e) {}
+};
+
+export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    await deleteDoc(lockRef);
+  } catch (e) {}
+};
+
+export const forceReleaseLock = async (studentId: string): Promise<void> => {
+  try {
+    const lockRef = doc(db, LOCKS_COLLECTION, studentId);
+    await deleteDoc(lockRef);
+  } catch (e) {}
+};
+
+// 7. Check if student can start test
 export const checkStudentEligibilityRealTime = async (
   student: { room: string; studentNumber: string; fullName: string },
   _sessionId: string
@@ -246,3 +211,6 @@ export const checkStudentEligibilityRealTime = async (
     return { canStart: true };
   }
 };
+
+// 8. Dummy export for compatibility
+export const syncOfflineData = async () => {};

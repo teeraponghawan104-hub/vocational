@@ -464,6 +464,10 @@ export default function TeacherDashboard({ onBack }: Props) {
               <span>รีเซ็ตเริ่มใหม่</span>
             </button>
           </div>
+          <div className="hidden lg:flex items-center gap-1.5 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-200 text-emerald-700 font-medium text-xs">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Vercel Cloud Sync</span>
+          </div>
           <div className="hidden md:flex items-center gap-2 bg-indigo-50 px-3 py-1.5 rounded-full border border-indigo-100 text-indigo-700 font-medium text-xs">
             <Users size={14} />
             <span>{results.length} คน</span>
