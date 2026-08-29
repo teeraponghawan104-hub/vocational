@@ -38,7 +38,7 @@ export default function TeacherDashboard({ onBack }: Props) {
       if (err) {
         console.warn("Teacher dashboard received error:", err);
       }
-      setResults([...data].sort((a, b) => b.timestamp - a.timestamp));
+      setResults(data);
       setLoading(false);
     });
 

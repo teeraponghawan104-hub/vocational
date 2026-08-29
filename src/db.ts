@@ -24,14 +24,28 @@ export const subscribeToAssessments = (
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const results: AssessmentResult[] = [];
+        let results: AssessmentResult[] = [];
         snapshot.forEach((docSnap) => {
           const data = docSnap.data();
           if (data) {
             results.push(data as AssessmentResult);
           }
         });
-        callback(results);
+        
+        // Deduplicate by room and studentNumber (keeping the most recent)
+        results = results.sort((a, b) => b.timestamp - a.timestamp);
+        const uniqueResults: AssessmentResult[] = [];
+        const seen = new Set<string>();
+        
+        results.forEach(item => {
+          const key = `${item.student.room}-${item.student.studentNumber}`;
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniqueResults.push(item);
+          }
+        });
+        
+        callback(uniqueResults);
       },
       (error) => {
         console.error('Error in Firestore snapshot:', error);
@@ -49,14 +63,27 @@ export const subscribeToAssessments = (
 export const getAssessments = async (): Promise<AssessmentResult[]> => {
   try {
     const querySnapshot = await getDocs(collection(db, ASSESSMENTS_COLLECTION));
-    const results: AssessmentResult[] = [];
+    let results: AssessmentResult[] = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
       if (data) {
         results.push(data as AssessmentResult);
       }
     });
-    return results;
+
+    results = results.sort((a, b) => b.timestamp - a.timestamp);
+    const uniqueResults: AssessmentResult[] = [];
+    const seen = new Set<string>();
+    
+    results.forEach(item => {
+      const key = `${item.student.room}-${item.student.studentNumber}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        uniqueResults.push(item);
+      }
+    });
+
+    return uniqueResults;
   } catch (error) {
     console.error('Error fetching assessments from Cloud Firestore:', error);
     return [];
