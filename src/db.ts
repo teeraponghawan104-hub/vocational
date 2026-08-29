@@ -1,159 +1,211 @@
 import { AssessmentResult } from './types';
 import { normalizeName } from './studentData';
-import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const CACHE_KEY = 'voca_assess_cache';
 
-export const supabase = (supabaseUrl && supabaseAnonKey) 
-  ? createClient(supabaseUrl, supabaseAnonKey) 
-  : null;
-
-export const syncOfflineData = async () => {};
-
-export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
-  if (!supabase) return () => {};
-  
-  const fetchLocks = async () => {
-    const { data } = await supabase.from('locks').select('*');
-    const now = Date.now();
-    const locks = (data || []).filter((l: any) => now - l.updated_at < 600000).map((l: any) => l.student_id);
-    callback(locks);
-  };
-  
-  fetchLocks();
-  
-  const channel = supabase
-    .channel('locks_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'locks' }, () => fetchLocks())
-    .subscribe();
-    
-  return () => { supabase.removeChannel(channel); };
-};
-
-export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
-  if (!supabase) return true;
+const getLocalCache = (): AssessmentResult[] => {
   try {
-    const { data } = await supabase.from('locks').select('*').eq('student_id', studentId).single();
-    const now = Date.now();
-    if (data && data.session_id !== sessionId && now - data.updated_at < 600000) {
-      return false; // locked by someone else
-    }
-    await supabase.from('locks').upsert({ student_id: studentId, session_id: sessionId, updated_at: now });
-    return true;
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
   } catch (e) {
-    return true; // fail open
-  }
-};
-
-export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
-  if (!supabase) return;
-  try {
-    await supabase.from('locks').upsert({ student_id: studentId, session_id: sessionId, updated_at: Date.now() });
-  } catch (e) {}
-};
-
-export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
-  if (!supabase) return;
-  try {
-    const { data } = await supabase.from('locks').select('*').eq('student_id', studentId).single();
-    if (data && data.session_id === sessionId) {
-      await supabase.from('locks').delete().eq('student_id', studentId);
-    }
-  } catch (e) {}
-};
-
-export const forceReleaseLock = async (studentId: string): Promise<void> => {
-  if (!supabase) return;
-  try {
-    await supabase.from('locks').delete().eq('student_id', studentId);
-  } catch (e) {}
-};
-
-export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
-  if (!supabase) {
-    saveToLocalCache(result);
-    throw new Error("Supabase is not configured.");
-  }
-  try {
-    const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 8000));
-    await Promise.race([
-      supabase.from('assessments').upsert({ id: result.id, data: result }),
-      timeoutPromise
-    ]);
-  } catch (e) {
-    console.error("Failed to save to Supabase:", e);
-    saveToLocalCache(result);
-    throw new Error("Cannot save to server. Data is only saved on this device.");
+    return [];
   }
 };
 
 const saveToLocalCache = (result: AssessmentResult) => {
   try {
-    const CACHE_KEY = 'voca_assess_cache';
-    const cachedRaw = localStorage.getItem(CACHE_KEY);
-    const cached: AssessmentResult[] = cachedRaw ? JSON.parse(cachedRaw) : [];
-    const filtered = cached.filter(a => a.id !== result.id);
+    const cached = getLocalCache();
+    const filtered = cached.filter((a) => a.id !== result.id);
     filtered.push(result);
     localStorage.setItem(CACHE_KEY, JSON.stringify(filtered));
-  } catch (err) {}
+  } catch (e) {}
+};
+
+export const syncOfflineData = async () => {
+  try {
+    const cached = getLocalCache();
+    if (cached.length === 0) return;
+
+    for (const item of cached) {
+      try {
+        await fetch('/api/assessments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item),
+        });
+      } catch (e) {}
+    }
+  } catch (e) {}
+};
+
+export const subscribeToLocks = (callback: (lockedStudentIds: string[]) => void): (() => void) => {
+  let isSubscribed = true;
+
+  const fetchLocks = async () => {
+    try {
+      const res = await fetch('/api/locks');
+      if (res.ok) {
+        const data = await res.json();
+        if (isSubscribed && Array.isArray(data.locks)) {
+          callback(data.locks);
+        }
+      }
+    } catch (e) {}
+  };
+
+  fetchLocks();
+  const interval = setInterval(fetchLocks, 4000);
+
+  return () => {
+    isSubscribed = false;
+    clearInterval(interval);
+  };
+};
+
+export const acquireLock = async (studentId: string, sessionId: string): Promise<boolean> => {
+  try {
+    const res = await fetch('/api/locks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, sessionId }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.acquired ?? true;
+    }
+    return true;
+  } catch (e) {
+    return true; // Fail-open
+  }
+};
+
+export const renewLock = async (studentId: string, sessionId: string): Promise<void> => {
+  try {
+    await fetch('/api/locks', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ studentId, sessionId }),
+    });
+  } catch (e) {}
+};
+
+export const releaseLock = async (studentId: string, sessionId: string): Promise<void> => {
+  try {
+    await fetch(`/api/locks?studentId=${encodeURIComponent(studentId)}&sessionId=${encodeURIComponent(sessionId)}`, {
+      method: 'DELETE',
+    });
+  } catch (e) {}
+};
+
+export const forceReleaseLock = async (studentId: string): Promise<void> => {
+  try {
+    await fetch(`/api/locks?studentId=${encodeURIComponent(studentId)}&force=true`, {
+      method: 'DELETE',
+    });
+  } catch (e) {}
+};
+
+export const saveAssessment = async (result: AssessmentResult): Promise<void> => {
+  saveToLocalCache(result);
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 9000);
+
+    const res = await fetch('/api/assessments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(result),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.warn('API error saving assessment:', errData);
+    }
+  } catch (e) {
+    console.warn('Network error saving assessment, preserved in offline cache:', e);
+  }
 };
 
 export const getAssessments = async (): Promise<AssessmentResult[]> => {
-  if (!supabase) return [];
   try {
-    const { data, error } = await supabase.from('assessments').select('data').order('created_at', { ascending: false });
-    if (error) throw error;
-    return (data || []).map((row: any) => row.data as AssessmentResult);
-  } catch (err) {
-    return [];
+    const res = await fetch('/api/assessments');
+    if (res.ok) {
+      const json = await res.json();
+      if (Array.isArray(json.data)) {
+        return json.data;
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to fetch from API, falling back to local cache:', e);
   }
+  return getLocalCache();
 };
 
-export const subscribeToAssessments = (callback: (assessments: AssessmentResult[], error?: string) => void): (() => void) => {
-  if (!supabase) {
-    callback([], "Supabase is not configured.");
-    return () => {};
-  }
-  
+export const subscribeToAssessments = (
+  callback: (assessments: AssessmentResult[], error?: string) => void
+): (() => void) => {
+  let isSubscribed = true;
+
   const fetchAll = async () => {
     try {
-      const { data } = await supabase.from('assessments').select('data').order('created_at', { ascending: false });
-      if (data) callback(data.map((row: any) => row.data as AssessmentResult));
-    } catch (e) {}
+      const res = await fetch('/api/assessments');
+      if (res.ok) {
+        const json = await res.json();
+        if (isSubscribed && Array.isArray(json.data)) {
+          callback(json.data);
+          return;
+        }
+      }
+    } catch (e) {
+      if (isSubscribed) {
+        callback(getLocalCache());
+      }
+    }
   };
-  
+
   fetchAll();
-  
-  const channel = supabase
-    .channel('assessments_changes')
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'assessments' }, () => fetchAll())
-    .subscribe();
-    
-  return () => { supabase.removeChannel(channel); };
+  const interval = setInterval(fetchAll, 3500);
+
+  return () => {
+    isSubscribed = false;
+    clearInterval(interval);
+  };
 };
 
 export const deleteAssessment = async (id: string): Promise<void> => {
-  if (!supabase) return;
   try {
-    await supabase.from('assessments').delete().eq('id', id);
-  } catch (err) {}
+    // Remove from local cache
+    const cached = getLocalCache().filter((a) => a.id !== id);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cached));
+
+    await fetch(`/api/assessments?id=${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+    });
+  } catch (err) {
+    console.error('Error deleting assessment:', err);
+  }
 };
 
 export const checkStudentEligibilityRealTime = async (
   student: { room: string; studentNumber: string; fullName: string },
-  sessionId: string
+  _sessionId: string
 ): Promise<{ canStart: boolean; reason?: string; existingResult?: AssessmentResult }> => {
   try {
     const normalizedTargetName = normalizeName(student.fullName);
     const assessments = await getAssessments();
 
     for (const a of assessments) {
-      if (a.student.room === student.room && String(a.student.studentNumber).trim() === String(student.studentNumber).trim()) {
+      if (
+        a.student.room === student.room &&
+        String(a.student.studentNumber).trim() === String(student.studentNumber).trim()
+      ) {
         return {
           canStart: false,
           reason: `นักเรียนเลขที่ ${student.studentNumber} ห้อง ${student.room} ได้ทำแบบทดสอบไปแล้ว`,
-          existingResult: a
+          existingResult: a,
         };
       }
       const aFullName = normalizeName(`${a.student.firstName || ''} ${a.student.lastName || ''}`);
@@ -161,7 +213,7 @@ export const checkStudentEligibilityRealTime = async (
         return {
           canStart: false,
           reason: `ชื่อ "${student.fullName}" ได้ทำแบบทดสอบไปแล้ว`,
-          existingResult: a
+          existingResult: a,
         };
       }
     }
