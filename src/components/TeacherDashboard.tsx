@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { cn } from '../lib/utils';
 import { AssessmentResult } from '../types';
-import { subscribeToAssessments, deleteAssessment, resetAllAssessments } from '../db';
+import { subscribeToAssessments, deleteAssessment, resetAllAssessments, cleanupDuplicates } from '../db';
 import { toPng } from 'html-to-image';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, Search, Filter, BarChart3, Users, Trash2, X, Download, Printer, RotateCcw, AlertTriangle, Loader2, CheckCircle2 } from 'lucide-react';
@@ -198,6 +198,29 @@ export default function TeacherDashboard({ onBack }: Props) {
     }
   };
 
+
+  const [isCleaning, setIsCleaning] = useState(false);
+  const [cleanSuccessMessage, setCleanSuccessMessage] = useState('');
+  
+  const handleCleanupDuplicates = async () => {
+    const confirm = window.confirm("คุณต้องการลบข้อมูลที่ซ้ำกันออกใช่หรือไม่? (การดำเนินการนี้จะใช้โควต้า Firebase ของคุณ กรุณากดเพียงครั้งเดียวตอนที่โควต้าเหลือพอ)");
+    if (!confirm) return;
+    
+    setIsCleaning(true);
+    setCleanSuccessMessage('');
+    try {
+      await cleanupDuplicates();
+      setCleanSuccessMessage('ลบข้อมูลที่ซ้ำซ้อนสำเร็จ!');
+      setTimeout(() => setCleanSuccessMessage(''), 5000);
+      // Wait a moment then reload to see fresh data
+      setTimeout(() => window.location.reload(), 2000);
+    } catch (e) {
+      console.error("Failed to clean duplicates:", e);
+      alert("เกิดข้อผิดพลาดในการลบข้อมูลซ้ำ");
+    } finally {
+      setIsCleaning(false);
+    }
+  };
 
   const filteredResults = results.filter(r => {
     if (!r || !r.student || !r.part1Score || !r.part2Score) return false;
@@ -454,6 +477,15 @@ export default function TeacherDashboard({ onBack }: Props) {
             <button onClick={exportToCSV} className="flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-emerald-100 hover:bg-emerald-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0">
               <Download size={14} className="shrink-0" />
               <span>ส่งออก CSV</span>
+            </button>
+            <button 
+              onClick={handleCleanupDuplicates} 
+              disabled={isCleaning}
+              className="flex items-center justify-center gap-1.5 bg-amber-50 text-amber-700 px-3 md:px-4 py-2 md:py-1.5 rounded-lg md:rounded-full border border-amber-200 hover:bg-amber-100 font-medium text-xs md:text-sm transition print:hidden whitespace-nowrap shrink-0 disabled:opacity-50"
+              title="ลบข้อมูลที่ซ้ำซ้อนกันในฐานข้อมูล"
+            >
+              {isCleaning ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+              <span>ลบข้อมูลซ้ำซ้อน</span>
             </button>
             <button 
               onClick={() => setShowResetModal(true)} 

@@ -112,6 +112,43 @@ export const deleteAssessment = async (id: string): Promise<void> => {
 };
 
 // 5. Reset All Assessments (Clear Cloud DB & Local Storage)
+export const cleanupDuplicates = async (): Promise<void> => {
+  try {
+    const assessSnap = await getDocs(collection(db, ASSESSMENTS_COLLECTION));
+    const allData = assessSnap.docs.map(doc => ({ id: doc.id, data: doc.data() as AssessmentResult }));
+    
+    // Sort by timestamp descending
+    allData.sort((a, b) => b.data.timestamp - a.data.timestamp);
+    
+    const seen = new Set<string>();
+    const idsToDelete: string[] = [];
+    
+    allData.forEach(item => {
+      const key = `${item.data.student.room}-${item.data.student.studentNumber}`;
+      if (!seen.has(key)) {
+        seen.add(key); // Keep this one (the newest)
+      } else {
+        idsToDelete.push(item.id); // Delete duplicates
+      }
+    });
+
+    if (idsToDelete.length === 0) return;
+
+    // Delete in batches of 500 (Firestore limit)
+    for (let i = 0; i < idsToDelete.length; i += 500) {
+      const batch = writeBatch(db);
+      const chunk = idsToDelete.slice(i, i + 500);
+      chunk.forEach(id => {
+        batch.delete(doc(db, ASSESSMENTS_COLLECTION, id));
+      });
+      await batch.commit();
+    }
+  } catch (err) {
+    console.error('Error cleaning up duplicates:', err);
+    throw err;
+  }
+};
+
 export const resetAllAssessments = async (): Promise<void> => {
   try {
     // 1. Delete all assessments in Firestore
